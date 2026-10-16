@@ -118,7 +118,18 @@ const teamIcons=['crest','shield','ball','stumps','monogram','star'];
 const playerIcons=['monogram','ball','shield','star','stumps'];
 function chooseIcon(value,list){return value==='random'?list[Math.floor(Math.random()*list.length)]:value}
 function initials(name, fallback='CP'){const parts=String(name||'').trim().split(/\s+/).filter(Boolean);return parts.length?parts.slice(0,2).map(x=>x[0]).join('').toUpperCase():fallback}
-function badgeIcon(style,name,short=''){const kind=teamIcons.includes(style)?style:(playerIcons.includes(style)?style:'monogram');const letters=short||initials(name);return `<span class=\"identity-icon icon-${kind}\" aria-label=\"${esc(name||'Cricket profile')} badge\">${kind==='ball'?'●':kind==='stumps'?'III':kind==='star'?'★':esc(letters)}</span>`}
+
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[ch]);
+}
+
+ function badgeIcon(style,name,short=''){const kind=teamIcons.includes(style)?style:(playerIcons.includes(style)?style:'monogram');const letters=short||initials(name);return `<span class=\"identity-icon icon-${kind}\" aria-label=\"${esc(name||'Cricket profile')} badge\">${kind==='ball'?'●':kind==='stumps'?'III':kind==='star'?'★':esc(letters)}</span>`}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function go(page){document.querySelectorAll('.page-view').forEach(p=>p.classList.remove('active'));const target=document.getElementById('page-'+page);if(target)target.classList.add('active');document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.getElementById('pageTitle').textContent=page==='home'?homeGreeting():pages[page]||'Cricket Pro';if(page==='scorecards')renderSearch(document.getElementById('matchSearch').value);if(page==='home'||page==='live')renderMatchFeeds();if(page==='teams')renderTeams();if(page==='clubs')renderClubs();if(page==='tournaments')renderTournaments();if(page==='stats')renderStats();if(page==='profiles')renderProfiles()}
 refreshHomeGreeting();setInterval(refreshHomeGreeting,60000);
