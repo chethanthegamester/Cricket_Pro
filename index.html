@@ -99,7 +99,18 @@
 <div class="modal-backdrop" id="phonepeTestModal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="phonepeTestTitle"><div class="modal-head"><h2 id="phonepeTestTitle">PhonePe checkout · TEST MODE</h2><button class="close" data-close aria-label="Close test checkout">×</button></div><div class="notice" style="margin-top:0;border-color:#8b6c2e;color:#e9cf87">SIMULATION ONLY — this is not PhonePe's live or sandbox gateway.</div><div class="result-card" style="margin-top:14px"><div class="eyebrow" id="phonepeTestPlan">MONTHLY PLAN</div><div style="font-size:32px;font-weight:900;margin:8px 0" id="phonepeTestPrice">₹49</div><div class="match-sub">Cricket Pro subscription checkout preview</div></div><p class="notice" id="phonepeTestStatus">Choose a simulated result to test how the app responds. No money will move.</p><div class="form-actions" style="margin-top:18px;flex-wrap:wrap"><button type="button" class="secondary" id="phonepeTestCancel">Cancel test</button><button type="button" class="secondary" id="phonepeTestFail">Simulate failure</button><button type="button" class="primary" id="phonepeTestSuccess">Simulate success</button></div><p class="match-sub" style="margin-top:12px">A simulated success does not grant Pro. Real activation must wait for a verified payment notification from the server.</p></div></div><div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const pages={home:'Good morning',discover:'Discover Cricket',live:'Live Matches',teams:'Teams & Players',clubs:'Clubs',tournaments:'Tournaments',scorecards:'Scorecards',records:'External Records',stats:'Statistics',profiles:'Profiles',pro:'Cricket Pro Plan',settings:'Settings'};
+function esc(value = '') {
+  return String(value).replace(/[&<>"']/g, function (char) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[char];
+  });
+}
+ const pages={home:'Good morning',discover:'Discover Cricket',live:'Live Matches',teams:'Teams & Players',clubs:'Clubs',tournaments:'Tournaments',scorecards:'Scorecards',records:'External Records',stats:'Statistics',profiles:'Profiles',pro:'Cricket Pro Plan',settings:'Settings'};
 const STORAGE_KEY='cricketProDataV1';
 let savedMatches=[], cloudMatches=[], cloudTeams=[], cloudPlayers=[], teams=[], players=[], clubs=[], tournaments=[], clubPlayerLinks=[], displayName='Cricket Player', nextPlayerCode=1, profileDetails={city:'',role:'Player',bio:''};
 try { const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(stored){savedMatches=Array.isArray(stored.savedMatches)?stored.savedMatches:[];teams=Array.isArray(stored.teams)?stored.teams:[];players=Array.isArray(stored.players)?stored.players:[];clubs=Array.isArray(stored.clubs)?stored.clubs:[];tournaments=Array.isArray(stored.tournaments)?stored.tournaments:[];clubPlayerLinks=Array.isArray(stored.clubPlayerLinks)?stored.clubPlayerLinks:[];displayName=stored.displayName||displayName;profileDetails=stored.profileDetails||profileDetails;nextPlayerCode=Number(stored.nextPlayerCode)||Math.max(1,...players.map(p=>Number(String(p.code||'').replace('CP-',''))+1).filter(Number.isFinite));} } catch(err) { console.warn('Could not load saved Cricket Pro data',err); }
