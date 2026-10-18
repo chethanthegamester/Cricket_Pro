@@ -220,4 +220,405 @@ document.getElementById('saveCloudConfig').addEventListener('click',saveCloudCon
 const originalGo=go;go=function(page){originalGo(page);if(page==='discover')renderDiscover();if(page==='records'){renderRecordPlayerOptions();renderExternalRecords()}if(page==='pro')renderDevices();if(page==='profiles')renderProfileClaims()};
 
 document.getElementById('profileName').textContent=displayName;document.getElementById('avatar').textContent=displayName.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();renderRecent();renderSearch();renderTeams();renderClubs();renderTournaments();renderStats();renderProfiles();renderDiscover();renderRecordPlayerOptions();renderExternalRecords();renderDevices();renderProfileClaims();
+/* Cricket Pro scoring patch v2 — add before the final </script> tag. */
+(function installCricketProScoringPatch() {
+  const originalRenderScoring = renderScoring;
+
+  renderScoring = function (match) {
+    originalRenderScoring(match);
+    const root = document.getElementById('scoreModalContent');
+    if (!root) return;
+
+    root.querySelectorAll('[data-extra], [data-wicket]').forEach(el => {
+      el.style.display = 'none';
+    });
+
+    const panel = document.createElement('section');
+    panel.id = 'cpAdvancedScoring';
+    panel.className = 'panel';
+    panel.style.marginTop = '14px';
+
+    panel.innerHTML = `
+      <h3>Extras and dismissals</h3>
+      <p class="notice">Wides and no-balls do not count as legal balls. Byes and leg-byes do.</p>
+
+      <h4>Wide (WD)</h4>
+      <div class="form-grid">
+        ${[1,2,3,4,5].map(n =>
+          `<button type="button" class="secondary" data-cp-wide="${n}">
+            WD +${n-1} · ${n} team run${n===1?'':'s'}
+          </button>`
+        ).join('')}
+      </div>
+
+      <h4>No-ball (NB)</h4>
+      <div class="form-grid">
+        ${[1,2,3,4,5,6,7].map(n =>
+          `<button type="button" class="secondary" data-cp-nb="${n}">
+            NB +${n-1} · ${n} team run${n===1?'':'s'}
+          </button>`
+        ).join('')}
+      </div>
+
+      <h4>Byes and leg-byes</h4>
+      <div class="form-grid">
+        ${[1,2,3,4].map(n =>
+          `<button type="button" class="secondary" data-cp-bye="${n}">Bye ${n}</button>
+           <button type="button" class="secondary" data-cp-legbye="${n}">Leg-bye ${n}</button>`
+        ).join('')}
+      </div>
+
+      <h4>Penalty runs</h4>
+      <button type="button" class="secondary" data-cp-penalty>Penalty +5</button>
+
+      <h4>Wicket</h4>
+      <button type="button" class="secondary" id="cpRecordWicket">Record wicket…</button>
+
+      <p class="notice" id="cpFreeHitNotice">
+        ${ensureInnings(match, Number(match.innings)||1).freeHit
+          ? 'FREE HIT active — only permitted dismissals can be recorded.'
+          : ''}
+      </p>`;
+
+    root.appendChild(panel);
+
+    const selected = () => {
+      const striker = document.getElementById('scoreStriker');
+      const nonStriker = document.getElementById('scoreNonStriker');
+      const bowler = document.getElementById('scoreBowler');
+      const inn = ensureInnings(match, Number(match.innings)||1);
+
+      if (striker) inn.strikerCode = striker.value;
+      if (nonStriker) inn.nonStrikerCode = nonStriker.value;
+      if (bowler) inn.bowlerCode = bowler.value;
+
+      return inn;
+    };
+
+    panel.querySelectorAll('[data-cp-wide]').forEach(btn =>
+      btn.addEventListener('click', () => {
+        selected();
+        const totalRuns = Number(btn.dataset.cpWide);
+
+        recordPlayerDelivery(match, {
+          type: 'wide',
+          totalRuns,
+          extras: totalRuns,
+          bowlerRuns: totalRuns,
+          legal: false,
+          label: `WD+${totalRuns-1}`
+        });
+      })
+    );
+
+    panel.querySelectorAll('[data-cp-nb]').forEach(btn =>
+      btn.addEventListener('click', () => {
+        selected();
+        const totalRuns = Number(btn.dataset.cpNb);
+        const batterRuns = totalRuns - 1;
+
+        recordPlayerDelivery(match, {
+          type: 'noball',
+          totalRuns,
+          batterRuns,
+          extras: 1,
+          bowlerRuns: totalRuns,
+          legal: false,
+          label: `NB+${batterRuns}`
+        });
+      })
+    );
+
+    ['bye', 'legbye'].forEach(type => {
+      panel.querySelectorAll(
+        type === 'bye' ? '[data-cp-bye]' : '[data-cp-legbye]'
+      ).forEach(btn =>
+        btn.addEventListener('click', () => {
+          selected();
+
+          const totalRuns = Number(
+            btn.dataset[type === 'bye' ? 'cpBye' : 'cpLegbye']
+          );
+
+          recordPlayerDelivery(match, {
+            type,
+            totalRuns,
+            extras: totalRuns,
+            bowlerRuns: 0,
+            legal: true,
+            label: `${type.toUpperCase()} ${totalRuns}`
+          });
+        })
+      );
+    });
+
+    panel.querySelector('[data-cp-penalty]').addEventListener('click', () => {
+      selected();
+
+      recordPlayerDelivery(match, {
+        type: 'penalty',
+        totalRuns: 5,
+        extras: 5,
+        bowlerRuns: 0,
+        legal: false,
+        label: 'PENALTY +5'
+      });
+    });
+
+    panel.querySelector('#cpRecordWicket').addEventListener('click', () => {
+      const inn = selected();
+
+      const types = [
+        'Bowled', 'Caught', 'Caught and bowled', 'LBW',
+        'Stumped', 'Hit wicket', 'Run out', 'Mankad',
+        'Timed out', 'Obstructing field', 'Retired out'
+      ];
+
+      const choice = prompt(
+        'Choose dismissal type:\n' + types.join(', '),
+        'Bowled'
+      );
+
+      if (!choice) return;
+
+      const dismissal = types.find(
+        t => t.toLowerCase() === choice.trim().toLowerCase()
+      );
+
+      if (!dismissal) {
+        alert('Enter one of the listed dismissal types.');
+        return;
+      }
+
+      const who = prompt(
+        `Who is out? Enter 1 for striker (${inn.strikerCode}) or 2 for non-striker (${inn.nonStrikerCode}).`,
+        '1'
+      );
+
+      if (who !== '1' && who !== '2') {
+        alert('Enter 1 or 2.');
+        return;
+      }
+
+      const dismissedCode =
+        who === '1' ? inn.strikerCode : inn.nonStrikerCode;
+
+      if (!dismissedCode) {
+        alert('Select both batters first.');
+        return;
+      }
+
+      const noDelivery = [
+        'Mankad', 'Timed out', 'Retired out'
+      ].includes(dismissal);
+
+      recordPlayerDelivery(match, {
+        type: 'wicket',
+        totalRuns: 0,
+        legal: !noDelivery,
+        wicket: true,
+        dismissal,
+        dismissedCode,
+        label: dismissal.toUpperCase()
+      });
+    });
+  };
+
+  recordPlayerDelivery = function (match, action) {
+    const inn = ensureInnings(match, Number(match.innings)||1);
+    const type = action.type;
+    const isPenalty = type === 'penalty';
+    const striker = inn.strikerCode;
+    const nonStriker = inn.nonStrikerCode;
+    const bowler = inn.bowlerCode;
+
+    if (!isPenalty && (!striker || !bowler)) {
+      showToast('Choose a striker and bowler before scoring');
+      return;
+    }
+
+    if (!isPenalty && type !== 'wicket' && striker === nonStriker) {
+      showToast('Choose two different batters');
+      return;
+    }
+
+    if (type === 'wicket' && !action.dismissal) {
+      showToast('Choose a dismissal type');
+      return;
+    }
+
+    if (
+      inn.freeHit &&
+      type === 'wicket' &&
+      action.legal &&
+      !['run out', 'mankad', 'obstructing field'].includes(
+        String(action.dismissal).toLowerCase()
+      )
+    ) {
+      showToast('Free hit: this dismissal is not allowed.');
+      return;
+    }
+
+    match.undoStack = match.undoStack || [];
+    match.undoStack.push({
+      inningsData: JSON.parse(JSON.stringify(match.inningsData||[])),
+      innings: match.innings,
+      runs: match.runs,
+      wickets: match.wickets,
+      balls: match.balls,
+      extras: match.extras,
+      status: match.status
+    });
+
+    const totalRuns = Math.max(
+      0,
+      Number(action.totalRuns ?? (type === 'runs' ? action.runs : 1)) || 0
+    );
+
+    const batterRuns = Math.max(
+      0,
+      Number(action.batterRuns ?? (type === 'runs' ? action.runs : 0)) || 0
+    );
+
+    const extras = Math.max(
+      0,
+      Number(
+        action.extras ??
+        (['wide','noball','bye','legbye'].includes(type)
+          ? totalRuns-batterRuns
+          : 0)
+      ) || 0
+    );
+
+    const bowlerRuns = Math.max(
+      0,
+      Number(
+        action.bowlerRuns ??
+        (type === 'runs'
+          ? totalRuns
+          : ['wide','noball'].includes(type)
+            ? totalRuns
+            : 0)
+      ) || 0
+    );
+
+    const legal = !!action.legal;
+    const previousBalls = Number(inn.balls)||0;
+
+    if (isPenalty) {
+      inn.runs = (Number(inn.runs)||0) + totalRuns;
+      inn.extras = (Number(inn.extras)||0) + extras;
+
+      inn.deliveries.push({
+        type,
+        total: totalRuns,
+        label: action.label||'PENALTY',
+        note: 'Penalty runs',
+        legal: false
+      });
+    } else {
+      const batter = innPlayerStats(inn, striker, 'batter');
+      const bowl = innPlayerStats(inn, bowler, 'bowler');
+
+      inn.runs = (Number(inn.runs)||0) + totalRuns;
+      inn.extras = (Number(inn.extras)||0) + extras;
+      bowl.runs = (Number(bowl.runs)||0) + bowlerRuns;
+
+      if (type === 'wide') {
+        bowl.wides = (Number(bowl.wides)||0) + 1;
+      }
+
+      if (type === 'noball') {
+        bowl.noBalls = (Number(bowl.noBalls)||0) + 1;
+      }
+
+      // Wides and no-balls do not count as balls faced.
+      if (legal) {
+        inn.balls = (Number(inn.balls)||0) + 1;
+        batter.balls = (Number(batter.balls)||0) + 1;
+        bowl.balls = (Number(bowl.balls)||0) + 1;
+      }
+
+      if (batterRuns) {
+        batter.runs = (Number(batter.runs)||0) + batterRuns;
+
+        if (batterRuns === 4) {
+          batter.fours = (Number(batter.fours)||0) + 1;
+        }
+
+        if (batterRuns === 6) {
+          batter.sixes = (Number(batter.sixes)||0) + 1;
+        }
+      }
+
+      if (type === 'wicket' || action.wicket) {
+        const dismissedCode = action.dismissedCode || striker;
+        const dismissed = innPlayerStats(inn, dismissedCode, 'batter');
+
+        if (!dismissed.out) {
+          inn.wickets = (Number(inn.wickets)||0) + 1;
+          dismissed.out = true;
+          dismissed.dismissal = action.dismissal || 'Wicket';
+
+          // Your requested rule: credit the bowler except for ordinary Run out.
+          if (String(action.dismissal||'').toLowerCase() !== 'run out') {
+            bowl.wickets = (Number(bowl.wickets)||0) + 1;
+          }
+        }
+
+        if (dismissedCode === inn.strikerCode) inn.strikerCode = '';
+        if (dismissedCode === inn.nonStrikerCode) inn.nonStrikerCode = '';
+      }
+
+      inn.deliveries.push({
+        type,
+        total: totalRuns,
+        label: action.label || action.dismissal ||
+          (type === 'runs' ? String(batterRuns) : type.toUpperCase()),
+        batterCode: striker,
+        batterName: playerForCode(striker)?.name||striker,
+        bowlerCode: bowler,
+        bowlerName: playerForCode(bowler)?.name||bowler,
+        note: action.dismissal ||
+          (type === 'runs' ? `${batterRuns} batter run(s)` : type+' extra'),
+        legal
+      });
+
+      // Rotate strike for completed runs and at the end of an over.
+      const runsForRotation =
+        type === 'runs' ? batterRuns :
+        ['bye','legbye'].includes(type) ? totalRuns :
+        type === 'noball' ? batterRuns :
+        type === 'wide' ? Math.max(0,totalRuns-1) : 0;
+
+      let swap = runsForRotation % 2 === 1;
+
+      if (
+        legal &&
+        Math.floor((previousBalls+1)/6) > Math.floor(previousBalls/6)
+      ) {
+        swap = !swap;
+      }
+
+      if (swap) {
+        [inn.strikerCode, inn.nonStrikerCode] =
+          [inn.nonStrikerCode, inn.strikerCode];
+      }
+
+      if (type === 'noball') {
+        inn.freeHit = true;
+      } else if (legal && inn.freeHit) {
+        inn.freeHit = false;
+      }
+    }
+
+    syncLegacyScore(match, inn);
+    persistData();
+    renderScoring(match);
+    renderRecent();
+
+    const search = document.getElementById('matchSearch');
+    renderSearch(search ? search.value : '');
+  };
+})();
 </script></body></html>
