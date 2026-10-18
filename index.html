@@ -497,8 +497,15 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       }
     }
   };
+})();
 
+(function installAdvancedCricketScoringPatch() {
+  const originalRenderScoring = renderScoring;
   renderScoring = function(match) {
+    originalRenderScoring(match);
+    const root = document.getElementById('scoreModalContent');
+    if (!root) return;
+    root.querySelector('#cpAdvancedScoring')?.remove();
     const panel = document.createElement('section');
     panel.id = 'cpAdvancedScoring';
     panel.className = 'panel';
