@@ -353,7 +353,7 @@ const DEFAULT_CLOUD_CONFIG={url:'https://qujsovdzbfhtjeazfrav.supabase.co',key:'
 function cloudConfig(){try{const saved=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'null');return saved?.url&&saved?.key?saved:DEFAULT_CLOUD_CONFIG}catch(e){return DEFAULT_CLOUD_CONFIG}}
 function setCloudStatus(label,ok=false){const el=document.getElementById('cloudStatus');if(!el)return;el.textContent=label.toUpperCase();el.className='status '+(ok?'':'upcoming')}
 function cloudUserLabel(user){const meta=user?.user_metadata||{};return meta.username||meta.display_name||user?.phone||user?.email||'Cricket Pro user'}
-function setAuthStatus(text){const el=document.getElementById('authStatus');if(el)el.textContent=text;const out=document.getElementById('signOutBtn');if(out)out.disabled=!currentCloudUser;const signed=document.getElementById('signedInName');if(signed)signed.textContent=currentCloudUser?cloudUserLabel(currentCloudUser):'Not signed in';const verify=document.getElementById('authVerifyBtn');if(verify&& !cpPendingOtpPhone)verify.disabled=true}
+function setAuthStatus(text){const el=document.getElementById('authStatus');if(el)el.textContent=text;const out=document.getElementById('signOutBtn');if(out)out.disabled=!currentCloudUser;const signed=document.getElementById('signedInName');if(signed)signed.textContent=currentCloudUser?cloudUserLabel(currentCloudUser):'Not signed in'}
 async function loadCloudMatches(){
   if(!supabaseClient)return;
   try{
