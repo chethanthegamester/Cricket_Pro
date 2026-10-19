@@ -355,7 +355,7 @@ function tournamentPlayerStatisticsHtml(t){
     });
     (inn.deliveries||[]).forEach(d=>{if(d&&d.fielderCode&&['Caught','Stumped','Run out'].includes(d.dismissal)){if(!rows.has(d.fielderCode))rows.set(d.fielderCode,{code:d.fielderCode,name:playerForCode(d.fielderCode)?.name||d.fielderCode,team:'',runs:0,balls:0,fours:0,sixes:0,outs:0,ballsBowled:0,runsConceded:0,wickets:0,fielding:0,mvpPoints:0});const f=rows.get(d.fielderCode);f.fielding++;f.mvpPoints+=10;}});
     Object.entries(inn.bowlers||{}).forEach(([code,b])=>{
-      if(!rows.has(code))rows.set(code,{code,name:playerForCode(code)?.name||code,team:'',runs:0,balls:0,fours:0,sixes:0,outs:0,ballsBowled:0,runsConceded:0,wickets:0});
+      if(!rows.has(code))rows.set(code,{code,name:playerForCode(code)?.name||code,team:'',runs:0,balls:0,fours:0,sixes:0,outs:0,ballsBowled:0,runsConceded:0,wickets:0,fielding:0,mvpPoints:0});
       const r=rows.get(code);r.ballsBowled+=Number(b.balls)||0;r.runsConceded+=Number(b.runs)||0;r.wickets+=Number(b.wickets)||0;r.mvpPoints+=(Number(b.wickets)||0)*20;
     });
   }));
@@ -1526,13 +1526,13 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
         else suggestedWinner = '';
       }
     }
-    const resultSummary = suggestedWinner===match.teamAId ? (match.a+' are ahead / win') : suggestedWinner===match.teamBId ? (match.b+' are ahead / win') : 'Select the winner, or mark the match as tied.';
+    const resultSummary = suggestedWinner===match.teamAId ? (match.a+' won by '+Math.max(0,(Number(inningsOne?.runs)||0)-(Number(inningsTwo?.runs)||0))+' runs.') : suggestedWinner===match.teamBId ? (match.b+' won the chase by '+Math.max(0,10-(Number(inningsTwo?.wickets)||0))+' wickets.') : (inningsOne&&inningsTwo?'The match is tied.':'Select the winner, or mark the match as tied.');
     const dialog = document.createElement('div');
     dialog.id = 'cpAwardsDialog';
     dialog.className = 'cp-score-dialog-backdrop';
     dialog.innerHTML =
       '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpAwardsTitle">' +
-        '<div class="cp-score-dialog-head"><div><div class="eyebrow">MATCH AWARDS</div><h2 id="cpAwardsTitle">Record match honours</h2></div>' +
+        '<div class="cp-score-dialog-head"><div><div class="eyebrow">MATCH AWARDS</div><h2 id="cpAwardsTitle">Match result & awards</h2></div>' +
         '<button type="button" class="cp-dialog-close" data-awards-cancel aria-label="Close">×</button></div>' +
         '<p class="notice" id="cpMatchResultNotice">'+esc(resultSummary)+' Confirm the result and choose Man of the Match. Tournament MVP is calculated automatically from player performance.</p>' +
         '<div class="field"><label for="cpWinnerSelect">Match winner</label><select id="cpWinnerSelect"><option value="" '+(!suggestedWinner?'selected':'')+'>Tie / no winner</option><option value="' + esc(match.teamAId) + '" '+(suggestedWinner===match.teamAId?'selected':'')+'>' + esc(match.a||'Team A') + ' won</option><option value="' + esc(match.teamBId) + '" '+(suggestedWinner===match.teamBId?'selected':'')+'>' + esc(match.b||'Team B') + ' won</option></select></div>' +
