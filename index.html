@@ -251,7 +251,118 @@
 <div class="modal-backdrop" id="playerQuickProfileModal"><div class="modal" style="width:min(560px,100%);max-height:90vh;overflow:auto"><div class="modal-head"><h2>Player profile</h2><button class="close" data-close aria-label="Close player profile">×</button></div><div id="playerQuickProfileContent"></div></div></div>
 <div class="modal-backdrop" id="proPlanModal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="proPlanModalTitle"><div class="modal-head"><h2 id="proPlanModalTitle">Review your Pro plan</h2><button class="close" data-close aria-label="Close">×</button></div><div class="result-card" style="margin:0"><div class="eyebrow" id="proCheckoutPlanLabel">MONTHLY PLAN</div><div style="font-size:32px;font-weight:900;margin:8px 0" id="proCheckoutPrice">₹49 <span style="font-size:13px;color:var(--muted);font-weight:600">/ month</span></div><div class="match-sub" id="proCheckoutDescription">Up to 5 devices and cloud sync when enabled.</div></div><div class="activity" style="margin-top:16px"><div class="activity-item"><div class="activity-icon">✓</div><div><b>Plan selection saved for this preview</b><small>Your current access remains Free until a real payment is verified.</small></div></div><div class="activity-item"><div class="activity-icon">🔒</div><div><b>PhonePe test checkout is not connected yet</b><small>The next screen is a local simulation only. No payment will be taken and Pro will not be activated.</small></div></div></div><p class="notice" id="proCheckoutStatus">Sign in to test the checkout flow. PhonePe sandbox credentials and secure server verification are still required.</p><div class="form-actions" style="margin-top:18px"><button type="button" class="secondary" data-close>Not now</button><button type="button" class="primary" id="proContinueBtn">Open test checkout</button></div></div></div>
 <div class="modal-backdrop" id="phonepeTestModal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="phonepeTestTitle"><div class="modal-head"><h2 id="phonepeTestTitle">PhonePe checkout · TEST MODE</h2><button class="close" data-close aria-label="Close test checkout">×</button></div><div class="notice" style="margin-top:0;border-color:#8b6c2e;color:#e9cf87">SIMULATION ONLY — this is not PhonePe's live or sandbox gateway.</div><div class="result-card" style="margin-top:14px"><div class="eyebrow" id="phonepeTestPlan">MONTHLY PLAN</div><div style="font-size:32px;font-weight:900;margin:8px 0" id="phonepeTestPrice">₹49</div><div class="match-sub">Cricket Pro subscription checkout preview</div></div><p class="notice" id="phonepeTestStatus">Choose a simulated result to test how the app responds. No money will move.</p><div class="form-actions" style="margin-top:18px;flex-wrap:wrap"><button type="button" class="secondary" id="phonepeTestCancel">Cancel test</button><button type="button" class="secondary" id="phonepeTestFail">Simulate failure</button><button type="button" class="primary" id="phonepeTestSuccess">Simulate success</button></div><p class="match-sub" style="margin-top:12px">A simulated success does not grant Pro. Real activation must wait for a verified payment notification from the server.</p></div></div><div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+/* In-app wicket flow: fielder attribution and incoming-batter selection. */
+(function installWicketChoicePopups(){
+  const recordBeforeWicketPopups = recordPlayerDelivery;
+
+  function uniqueRoster(teamId){
+    const map = new Map();
+    [...(players||[]), ...(cloudPlayers||[])].forEach(p=>{
+      if(p && p.code && p.teamId===teamId && !map.has(p.code)) map.set(p.code,p);
+    });
+    return [...map.values()];
+  }
+  function showPlayerChoice(title, eyebrow, list, excludedCodes, emptyText, onChoose){
+    const root=document.getElementById('scoreModalContent');
+    if(!root) return;
+    root.querySelector('#cpWicketChoiceDialog')?.remove();
+    const available=list.filter(p=>p && p.code && !excludedCodes.includes(p.code));
+    const dialog=document.createElement('div');
+    dialog.id='cpWicketChoiceDialog';
+    dialog.className='cp-score-dialog-backdrop';
+    dialog.innerHTML=
+      '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpWicketChoiceTitle">'+
+        '<div class="cp-score-dialog-head"><div><div class="eyebrow">'+esc(eyebrow)+'</div><h2 id="cpWicketChoiceTitle">'+esc(title)+'</h2></div></div>'+
+        (available.length
+          ? '<div class="cp-dismissal-grid">'+available.map(p=>'<button type="button" class="secondary cp-dismissal-option" data-choice-code="'+esc(p.code)+'">'+esc(p.name)+(p.role?' · '+esc(p.role):'')+'</button>').join('')+'</div>'
+          : '<p class="notice">'+esc(emptyText)+'</p>')+
+      '</section>';
+    root.appendChild(dialog);
+    dialog.querySelectorAll('[data-choice-code]').forEach(button=>button.addEventListener('click',()=>{
+      const chosen=available.find(p=>p.code===button.dataset.choiceCode);
+      if(!chosen) return;
+      dialog.remove();
+      onChoose(chosen);
+    }));
+  }
+
+  function showIncomingBatter(match, inn, dismissedCode){
+    if((Number(inn.wickets)||0)>=10) return;
+    const roster=uniqueRoster(inn.battingTeamId);
+    const eligible=roster.filter(p=>
+      p.code!==inn.strikerCode &&
+      p.code!==inn.nonStrikerCode &&
+      p.code!==dismissedCode &&
+      !inn.batters?.[p.code]?.out
+    );
+    showPlayerChoice(
+      'Choose the incoming batter',
+      'NEXT BATTER',
+      eligible,
+      [],
+      'No eligible batters are assigned to the batting team. Add players to the team before continuing.',
+      p=>{
+        if(inn.strikerCode===dismissedCode) inn.strikerCode=p.code;
+        else if(inn.nonStrikerCode===dismissedCode) inn.nonStrikerCode=p.code;
+        else inn.strikerCode=p.code;
+        innPlayerStats(inn,p.code,'batter');
+        persistData();
+        renderScoring(match);
+        renderRecent();
+        showToast(p.name+' comes in to bat');
+      }
+    );
+  }
+
+  function showFielderChoice(match, action, dismissedCode){
+    const inn=ensureInnings(match,Number(match.innings)||1);
+    const bowlingTeamId=inn.bowlingTeamId || (Number(inn.number)===1 ? match.teamBId : match.teamAId);
+    const roster=uniqueRoster(bowlingTeamId);
+    const kind=action.dismissal;
+    const isCatch=kind==='Caught';
+    const title=isCatch?'Who took the catch?':kind==='Stumped'?'Which wicketkeeper made the stumping?':'Which fielder effected the run-out?';
+    showPlayerChoice(
+      title,
+      kind.toUpperCase(),
+      roster,
+      [],
+      'No players are assigned to the fielding team yet. Add the fielding team players first.',
+      p=>recordPlayerDelivery(match,{...action,fielderCode:p.code,fielderName:p.name})
+    );
+  }
+
+  recordPlayerDelivery=function(match, action){
+    if(action && action.type==='wicket' && action.dismissal){
+      const needsFielder=['Caught','Run out','Stumped'].includes(action.dismissal);
+      if(needsFielder && !action.fielderCode){
+        showFielderChoice(match,action,ensureInnings(match,Number(match.innings)||1).strikerCode);
+        return;
+      }
+      const inn=ensureInnings(match,Number(match.innings)||1);
+      const dismissedCode=inn.strikerCode;
+      recordBeforeWicketPopups(match,action);
+      const latest=inn.deliveries && inn.deliveries[inn.deliveries.length-1];
+      if(latest && latest.type==='wicket'){
+        if(action.fielderCode){
+          latest.fielderCode=action.fielderCode;
+          latest.fielderName=action.fielderName || playerForCode(action.fielderCode)?.name || action.fielderCode;
+          latest.note=(latest.dismissal || action.dismissal)+' · '+latest.fielderName;
+        }
+        persistData();
+        renderScoring(match);
+        renderRecent();
+        renderSearch(document.getElementById('matchSearch')?.value || '');
+        Promise.resolve().then(()=>showIncomingBatter(match,inn,dismissedCode));
+      }
+      return;
+    }
+    return recordBeforeWicketPopups(match,action);
+  };
+})();
+
+</script>
 <script>
 function esc(value = '') {
   return String(value).replace(/[&<>"']/g, function (char) {
@@ -829,14 +940,12 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     inn.deliveries.push({
       type, total:totalRuns, label:dismissal || type.toUpperCase(),
       batterCode:strikerCode, bowlerCode, legal,
+      dismissal, fielderCode:action.fielderCode || (dismissal === "Caught & bowled" ? bowlerCode : ""),
+      fielderName:action.fielderName || (dismissal === "Caught & bowled" ? (playerForCode(bowlerCode)?.name || bowlerCode) : ""),
       note:dismissal || `${totalRuns} run${totalRuns === 1 ? "" : "s"}`
     });
 
-    // After a wicket, ask for the next batter automatically.
-    if (type === "wicket" && inn.wickets < 10) {
-      const replaced = selectIncomingBatter(m, inn, strikerCode);
-      if (!replaced) showToast("Select the incoming batter before the next delivery.");
-    }
+    // The in-app wicket workflow below asks for the incoming batter after dismissal details.
 
     syncLegacyScore(m, inn);
     persistData();
