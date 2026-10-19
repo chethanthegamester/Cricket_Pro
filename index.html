@@ -1579,6 +1579,77 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     }
   }
 })();
+
+/* Automatic next-over bowler picker: open an in-app popup after six legal balls. */
+(function installAutomaticOverBowlerPicker(){
+  const recordDeliveryBeforeBowlerPicker = recordPlayerDelivery;
+
+  function getBowlingRoster(match, innings){
+    const teamId = innings.bowlingTeamId || (Number(innings.number)===1 ? match.teamBId : match.teamAId);
+    const unique = new Map();
+    [...(players||[]), ...(cloudPlayers||[])].forEach(p=>{
+      if(p && p.code && p.teamId===teamId && !unique.has(p.code)) unique.set(p.code,p);
+    });
+    return [...unique.values()];
+  }
+
+  function showNextBowlerDialog(match, innings, previousBowlerCode){
+    const root=document.getElementById('scoreModalContent');
+    if(!root) return;
+    root.querySelector('#cpNextOverBowlerDialog')?.remove();
+    const roster=getBowlingRoster(match,innings);
+    const previousName=playerForCode(previousBowlerCode)?.name || 'previous bowler';
+    const dialog=document.createElement('div');
+    dialog.id='cpNextOverBowlerDialog';
+    dialog.className='cp-score-dialog-backdrop';
+    dialog.innerHTML=
+      '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpNextOverBowlerTitle">'+
+        '<div class="cp-score-dialog-head"><div><div class="eyebrow">OVER COMPLETE</div><h2 id="cpNextOverBowlerTitle">Choose the next over bowler</h2></div>'+
+        '<button type="button" class="cp-dialog-close" data-next-bowler-cancel aria-label="Close">×</button></div>'+
+        '<p class="notice">Choose from the full bowling team. '+esc(previousName)+' bowled the last over and cannot bowl consecutive overs.</p>'+
+        '<div class="cp-bowler-grid">'+
+          (roster.length?roster.map(p=>{
+            const isPrevious=p.code===previousBowlerCode;
+            return '<button type="button" class="secondary cp-dismissal-option" data-next-bowler-code="'+esc(p.code)+'" '+(isPrevious?'disabled aria-disabled="true"':'')+'>'+
+              esc(p.name)+(isPrevious?' · just bowled':'')+'</button>';
+          }).join(''):'<p class="notice">No players are assigned to the bowling team yet. Add players to that team first.</p>')+
+        '</div></section>';
+    root.appendChild(dialog);
+    dialog.querySelector('[data-next-bowler-cancel]').addEventListener('click',()=>{
+      dialog.remove();
+      showToast('Choose a next-over bowler before scoring the next delivery.');
+    });
+    dialog.addEventListener('click',e=>{if(e.target===dialog) {
+      dialog.remove();
+      showToast('Choose a next-over bowler before scoring the next delivery.');
+    }});
+    dialog.querySelectorAll('[data-next-bowler-code]').forEach(button=>button.addEventListener('click',()=>{
+      const code=button.dataset.nextBowlerCode;
+      if(!code || code===previousBowlerCode) return;
+      innings.bowlerCode=code;
+      persistData();
+      dialog.remove();
+      renderScoring(match);
+      renderRecent();
+      showToast((playerForCode(code)?.name||'Bowler')+' selected for the next over');
+    }));
+  }
+
+  recordPlayerDelivery=function(match, action){
+    const innings=ensureInnings(match,Number(match.innings)||1);
+    const ballsBefore=Number(innings.balls)||0;
+    const previousBowler=innings.bowlerCode;
+    recordDeliveryBeforeBowlerPicker(match,action);
+    const current=ensureInnings(match,Number(match.innings)||1);
+    const ballsAfter=Number(current.balls)||0;
+    const overBefore=Math.floor(ballsBefore/6);
+    const overAfter=Math.floor(ballsAfter/6);
+    if(ballsAfter>ballsBefore && overAfter>overBefore){
+      // Defer until the scoring render has completed; no prompt() browser dialog.
+      Promise.resolve().then(()=>showNextBowlerDialog(match,current,previousBowler));
+    }
+  };
+})();
 </script>
 </body>
 </html>
