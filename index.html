@@ -926,14 +926,42 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
   };
 })();
 
-/* Remove only the unwanted advanced extras-and-dismissals panel after all scoring UI updates. */
-(function removeUnwantedAdvancedExtrasPanel() {
+/* Keep Batting figures visible and remove only the duplicate advanced Extras and dismissals panel. */
+(function fixScoringPanels() {
   const previousRenderScoring = renderScoring;
   renderScoring = function(match) {
     previousRenderScoring(match);
     const root = document.getElementById('scoreModalContent');
     if (!root) return;
+
+    // Remove the separate advanced extras panel; the scoring keypad above remains.
     root.querySelector('#cpAdvancedScoring')?.remove();
+
+    // Some scoring patches replace parts of the original markup. Recreate Batting figures if missing.
+    const hasBattingFigures = [...root.querySelectorAll('h3')].some(h =>
+      h.textContent.trim().toLowerCase() === 'batting figures'
+    );
+    if (!hasBattingFigures) {
+      const innings = ensureInnings(match, Number(match.innings) || 1);
+      const rows = Object.entries(innings.batters || {}).map(([code, batter]) => {
+        const player = playerForCode(code);
+        return '<div class="match-row"><div class="match-left"><b>' +
+          esc(player?.name || code) + '</b><div class="match-sub">' +
+          (Number(batter.runs) || 0) + ' runs · ' + (Number(batter.balls) || 0) +
+          ' balls · ' + (Number(batter.fours) || 0) + ' fours · ' +
+          (Number(batter.sixes) || 0) + ' sixes · ' +
+          (batter.out ? 'OUT' : 'NOT OUT') +
+          '</div></div></div>';
+      }).join('');
+      const panel = document.createElement('section');
+      panel.className = 'panel';
+      panel.style.marginTop = '14px';
+      panel.innerHTML = '<div class="panel-title"><h3 style="margin:0">Batting figures</h3></div>' +
+        (rows || '<p class="notice">No individual batting figures yet.</p>');
+      const actions = root.querySelector('#undoBall')?.parentElement;
+      if (actions) root.insertBefore(panel, actions);
+      else root.appendChild(panel);
+    }
   };
 })();
 </script></body></html>
