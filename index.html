@@ -165,6 +165,10 @@
 .cp-quick-player-layer{z-index:45}
 .cp-quick-player-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 @media(max-width:440px){.cp-choice-avatar{width:34px;height:34px;min-width:34px}.cp-choice-player{min-height:52px}}
+
+.cp-team-avatar{border-color:#9b8b50;background:#352f1d}
+.cp-choice-team-label{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:750;color:var(--muted)}
+.cp-choice-team-label .cp-choice-avatar{width:28px;height:28px;min-width:28px;box-shadow:none}
 </style>
 </head>
 <body><div class="app">
@@ -1688,6 +1692,13 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     const fallback=badgeIcon(person?.icon||'monogram',name,initials(name));
     return '<span class="cp-choice-avatar">'+(url?'<img src="'+esc(url)+'" alt="" loading="lazy" onerror="this.remove()">':fallback)+'</span>';
   }
+  function teamIdentityMarkup(teamId){
+    const team=[...(teams||[]),...(cloudTeams||[])].find(t=>t&&t.id===teamId);
+    if(!team)return '';
+    const url=team.logoUrl||team.logo_url||'';
+    const fallback=badgeIcon(team.icon||'crest',team.name,team.short||initials(team.name));
+    return '<span class="cp-choice-avatar cp-team-avatar">'+(url?'<img src="'+esc(url)+'" alt="" loading="lazy" onerror="this.remove()">':fallback)+'</span>';
+  }
   function createQuickPlayer(teamId,afterCreate,parentDialog){
     const root=document.getElementById('scoreModalContent');if(!root)return;
     root.querySelector('#cpQuickPlayerDialog')?.remove();
@@ -1714,7 +1725,8 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     root.querySelector('#cpWicketChoiceDialog')?.remove();
     const available=list.filter(p=>p&&p.code&&!excludedCodes.includes(p.code));
     const dialog=document.createElement('div');dialog.id='cpWicketChoiceDialog';dialog.className='cp-score-dialog-backdrop';
-    dialog.innerHTML='<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpWicketChoiceTitle"><div class="cp-score-dialog-head"><div><div class="eyebrow">'+esc(eyebrow)+'</div><h2 id="cpWicketChoiceTitle">'+esc(title)+'</h2></div></div>'+
+    const team=[...(teams||[]),...(cloudTeams||[])].find(t=>t&&t.id===teamId);
+    dialog.innerHTML='<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpWicketChoiceTitle"><div class="cp-score-dialog-head"><div><div class="eyebrow">'+esc(eyebrow)+'</div><h2 id="cpWicketChoiceTitle">'+esc(title)+'</h2>'+(team?'<div class="cp-choice-team-label">'+teamIdentityMarkup(teamId)+'<span>'+esc(team.name)+'</span></div>':'')+'</div></div>'+
       (available.length?'<div class="cp-choice-player-list">'+available.map(p=>'<button type="button" class="secondary cp-choice-player" data-choice-code="'+esc(p.code)+'">'+identityMarkup(p)+'<span class="cp-choice-player-text"><strong>'+esc(p.name)+'</strong>'+(p.role?'<small>'+esc(p.role)+'</small>':'')+'</span></button>').join('')+'</div>':'<p class="notice">'+esc(emptyText)+'</p>')+
       '<button type="button" class="secondary cp-quick-add-trigger" data-create-player>＋ Create a player for this team</button></section>';
     root.appendChild(dialog);
