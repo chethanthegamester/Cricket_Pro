@@ -932,4 +932,21 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     renderSearch(search ? search.value : '');
   };
 })();
+
+/* Final cleanup: remove any remaining legacy batting figures panel after every scoring renderer runs. */
+(function removeLegacyBattingFiguresPanel() {
+  const previousRenderScoring = renderScoring;
+  renderScoring = function(match) {
+    previousRenderScoring(match);
+    const root = document.getElementById('scoreModalContent');
+    if (!root) return;
+    root.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(heading => {
+      if (heading.textContent.trim().toLowerCase() === 'batting figures') {
+        const panel = heading.closest('.panel');
+        if (panel) panel.remove();
+        else heading.parentElement?.remove();
+      }
+    });
+  };
+})();
 </script></body></html>
