@@ -1493,6 +1493,17 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     if (!root) return;
     root.querySelector('#cpAwardsDialog')?.remove();
     const roster = getMatchPlayers(match);
+    const inningsOne = (match.inningsData||[]).find(x=>Number(x.number)===1);
+    const inningsTwo = (match.inningsData||[]).find(x=>Number(x.number)===2);
+    let suggestedWinner = match.winnerTeamId || '';
+    if (inningsOne && inningsTwo) {
+      if ((Number(inningsTwo.runs)||0) > (Number(inningsOne.runs)||0)) suggestedWinner = match.teamBId;
+      else if ((Number(inningsTwo.wickets)||0) >= 10 || (Number(inningsTwo.balls)||0) >= Math.max(1,Number(match.overs)||20)*6) {
+        if ((Number(inningsTwo.runs)||0) < (Number(inningsOne.runs)||0)) suggestedWinner = match.teamAId;
+        else suggestedWinner = '';
+      }
+    }
+    const resultSummary = suggestedWinner===match.teamAId ? (match.a+' are ahead / win') : suggestedWinner===match.teamBId ? (match.b+' are ahead / win') : 'Select the winner, or mark the match as tied.';
     const dialog = document.createElement('div');
     dialog.id = 'cpAwardsDialog';
     dialog.className = 'cp-score-dialog-backdrop';
@@ -1500,8 +1511,8 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpAwardsTitle">' +
         '<div class="cp-score-dialog-head"><div><div class="eyebrow">MATCH AWARDS</div><h2 id="cpAwardsTitle">Record match honours</h2></div>' +
         '<button type="button" class="cp-dialog-close" data-awards-cancel aria-label="Close">×</button></div>' +
-        '<p class="notice" id="cpMatchResultNotice">Confirm the winner, then choose Man of the Match and MVP. These will be saved to the scorecard and tournament statistics.</p>' +
-        '<div class="field"><label for="cpWinnerSelect">Match winner</label><select id="cpWinnerSelect"><option value="">Tie / no winner</option><option value="' + esc(match.teamAId) + '">' + esc(match.a||'Team A') + ' won</option><option value="' + esc(match.teamBId) + '">' + esc(match.b||'Team B') + ' won</option></select></div>' +
+        '<p class="notice" id="cpMatchResultNotice">'+esc(resultSummary)+' Confirm the result, then choose Man of the Match and MVP.</p>' +
+        '<div class="field"><label for="cpWinnerSelect">Match winner</label><select id="cpWinnerSelect"><option value="" '+(!suggestedWinner?'selected':'')+'>Tie / no winner</option><option value="' + esc(match.teamAId) + '" '+(suggestedWinner===match.teamAId?'selected':'')+'>' + esc(match.a||'Team A') + ' won</option><option value="' + esc(match.teamBId) + '" '+(suggestedWinner===match.teamBId?'selected':'')+'>' + esc(match.b||'Team B') + ' won</option></select></div>' +
         (roster.length ? '<div class="field"><label for="cpManOfMatchSelect">Man of the Match</label><select id="cpManOfMatchSelect">' +
           optionMarkup(roster,match.manOfTheMatchCode||'') + '</select></div><div class="field"><label for="cpMvpSelect">MVP</label><select id="cpMvpSelect">' +
           optionMarkup(roster,match.mvpCode||'') + '</select></div>' :
@@ -1784,6 +1795,36 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       return;
     }
     return recordBeforeWicketPopups(match,action);
+  };
+})();
+
+/* Automatically end a chase when the target is reached, the side is all out, or its overs finish. */
+(function installAutomaticMatchEnd(){
+  const recordBeforeAutoEnd=recordPlayerDelivery;
+  recordPlayerDelivery=function(match,action){
+    const beforeStatus=match.status;
+    recordBeforeAutoEnd(match,action);
+    if(beforeStatus==='COMPLETED'||match.status==='COMPLETED'||match._cpEndingDialogOpen)return;
+    const inn=ensureInnings(match,Number(match.innings)||1);
+    if(Number(inn.number)!==2)return;
+    const first=(match.inningsData||[]).find(x=>Number(x.number)===1);
+    if(!first)return;
+    const target=(Number(first.runs)||0)+1;
+    const limit=Math.max(1,Number(match.overs)||20)*6;
+    const reached=(Number(inn.runs)||0)>=target;
+    const allOut=(Number(inn.wickets)||0)>=10;
+    const oversDone=(Number(inn.balls)||0)>=limit;
+    if(!reached&&!allOut&&!oversDone)return;
+    match._cpEndingDialogOpen=true;
+    const winner=reached?match.teamBId:(Number(inn.runs)||0)>(Number(first.runs)||0)?match.teamBId:(Number(inn.runs)||0)<(Number(first.runs)||0)?match.teamAId:'';
+    match.winnerTeamId=winner;
+    match.resultText=winner===(match.teamAId)?match.a+' won':winner===(match.teamBId)?match.b+' won':'Match tied';
+    persistData();
+    Promise.resolve().then(()=>{
+      document.getElementById('cpNextOverBowlerDialog')?.remove();
+      document.getElementById('cpWicketChoiceDialog')?.remove();
+      document.dispatchEvent(new CustomEvent('cp:match-ended',{detail:{match}}));
+    });
   };
 })();
 </script>
