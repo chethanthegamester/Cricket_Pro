@@ -1918,6 +1918,53 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     return result;
   };
 })();
+
+/* Final scoring UI safeguard: restore the wicket control after every scoring render.
+   Earlier extras UI replaces its parent button row, so never rely on its old button. */
+(function installFinalWicketButtonAndOverPickerUI(){
+  const renderBeforeFinalScoringUI = renderScoring;
+  renderScoring = function(match) {
+    const result = renderBeforeFinalScoringUI(match);
+    const root = document.getElementById('scoreModalContent');
+    if (!root) return result;
+
+    let wicketButton = root.querySelector('[data-cp-final-wicket]');
+    if (!wicketButton) {
+      const actions = root.querySelector('.scoreboard-extra-actions');
+      const host = document.createElement('div');
+      host.className = 'cp-final-wicket-row';
+      host.style.cssText = 'display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0';
+      wicketButton = document.createElement('button');
+      wicketButton.type = 'button';
+      wicketButton.className = 'secondary score-extra-trigger';
+      wicketButton.dataset.cpFinalWicket = '1';
+      wicketButton.textContent = '＋ Wicket / Out';
+      host.appendChild(wicketButton);
+      if (actions) actions.insertAdjacentElement('afterend', host);
+      else {
+        const scoreCard = root.querySelector('.result-card');
+        if (scoreCard) scoreCard.insertAdjacentElement('afterend', host);
+        else root.prepend(host);
+      }
+    }
+
+    if (wicketButton && !wicketButton.dataset.boundFinalWicket) {
+      wicketButton.dataset.boundFinalWicket = '1';
+      wicketButton.addEventListener('click', () => {
+        const striker = root.querySelector('#scoreStriker');
+        const nonStriker = root.querySelector('#scoreNonStriker');
+        const bowler = root.querySelector('#scoreBowler');
+        const innings = ensureInnings(match, Number(match.innings) || 1);
+        if (striker) innings.strikerCode = striker.value;
+        if (nonStriker) innings.nonStrikerCode = nonStriker.value;
+        if (bowler) innings.bowlerCode = bowler.value;
+        persistData();
+        recordPlayerDelivery(match, {type:'wicket', legal:true, totalRuns:0});
+      });
+    }
+    return result;
+  };
+})();
 </script>
 </body>
 </html>
