@@ -1906,9 +1906,12 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     const result = recordAfterAllScoringWrappers(match, action);
     const afterInnings = ensureInnings(match, Number(match.innings) || inningsNumber);
     const ballsAfter = Number(afterInnings.balls) || 0;
-    const isLegalDelivery = action && action.legal !== false &&
-      !['wide', 'noball', 'penalty'].includes(String(action.type || '').toLowerCase());
-    const crossedOverBoundary = isLegalDelivery && ballsAfter > ballsBefore &&
+    const actionType = String(action && action.type || '').toLowerCase();
+    const lastDelivery = Array.isArray(afterInnings.deliveries) ? afterInnings.deliveries[afterInnings.deliveries.length - 1] : null;
+    const deliveryWasLegal = action && action.legal !== false &&
+      !['wide', 'noball', 'penalty'].includes(actionType) &&
+      (!lastDelivery || lastDelivery.legal !== false);
+    const crossedOverBoundary = deliveryWasLegal && ballsAfter > ballsBefore &&
       ballsAfter % 6 === 0 &&
       Math.floor(ballsAfter / 6) > Math.floor(ballsBefore / 6);
     if (crossedOverBoundary) {
@@ -1920,7 +1923,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
         if (typeof window.cpShowNextOverBowlerDialog === 'function') {
           window.cpShowNextOverBowlerDialog(match, current, previousBowlerCode);
         }
-      }, 350);
+      }, 700);
     }
     return result;
   };
@@ -2002,10 +2005,12 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       '<div class="scoreboard-keypad">' +
       [1,2,3,4].map(n=>'<button type="button" class="secondary" data-final-legbye="'+n+'">'+n+' leg-bye'+(n===1?'':'s')+'</button>').join('') +
       '</div>';
-    // Put the extras keypad FIRST inside the scoring content, before the scorecard
-    // and batting tables, so it is immediately visible when the scoring modal opens.
-    panel.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;order:-1!important;width:100%;max-width:100%;box-sizing:border-box;margin:0 0 14px!important;z-index:20';
-    root.insertBefore(panel, root.firstElementChild);
+    // Mount extras as a fixed tray on the scoring modal, outside its scrolling content.
+    // This prevents the keypad being clipped or pushed out of view by the scorecard.
+    panel.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;position:fixed!important;left:50%!important;transform:translateX(-50%)!important;bottom:12px!important;top:auto!important;width:min(760px,calc(100vw - 24px))!important;max-width:none!important;max-height:42dvh!important;overflow-y:auto!important;box-sizing:border-box;margin:0!important;padding:14px!important;z-index:100010!important;background:#101820!important;border:2px solid #b8f34a!important;border-radius:16px!important;box-shadow:0 12px 50px #000d!important';
+    const scoreModal = document.getElementById('scoreModal');
+    if (scoreModal) scoreModal.appendChild(panel);
+    else document.body.appendChild(panel);
     const getInn = () => {
       const inn = ensureInnings(match, Number(match.innings)||1);
       const striker = root.querySelector('#scoreStriker');
