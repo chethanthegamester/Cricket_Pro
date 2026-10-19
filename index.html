@@ -49,6 +49,16 @@
 .cp-dismissal-option{min-height:46px;text-align:left;padding:12px}
 @media(max-width:440px){.cp-dismissal-grid{grid-template-columns:1fr}.cp-score-dialog{padding:14px}.cp-batter-head,.cp-batter-line{grid-template-columns:minmax(0,1fr) 32px 32px 32px}}
 
+
+/* Complete dismissal picker */
+.cp-dismissed-picker{margin:0 0 14px}
+.cp-dismissed-label{font-size:12px;font-weight:850;color:var(--muted);margin-bottom:8px}
+.cp-dismissed-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cp-dismissed-option{min-height:44px;text-align:left;white-space:normal}
+.cp-dismissed-option.active{background:var(--green);border-color:var(--green);color:#11170b;font-weight:900}
+.cp-dismissal-note{margin:12px 0 0;font-size:11px}
+@media(max-width:440px){.cp-dismissed-options{grid-template-columns:1fr}}
+
 </style><style id="cricket-pro-responsive-upgrades">
 /* Expanded Cricket Pro screens */
 #discoverResults .profile-card{min-width:0}#discoverResults .result-card{margin-top:0}#discoverResults .primary,#externalRecordsList button{white-space:nowrap}.record-meta{font-size:11px;color:var(--muted);margin-top:6px}.record-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.record-status{display:inline-block;border-radius:7px;padding:4px 8px;font-size:10px;font-weight:900;letter-spacing:.3px;background:#263241;color:#dbe7f4}.record-status.approved{background:#25321a;color:var(--green)}.record-status.pending{background:#332b19;color:#f3ce75}.record-status.rejected{background:#3b2227;color:#ff929b}.community-tag{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--green);font-weight:800}
@@ -801,7 +811,74 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     }
 
     if (type === 'wicket' && !action.dismissal) {
-      showToast('Choose a dismissal type');
+      const kinds = [
+        'Bowled',
+        'Caught',
+        'Caught & bowled',
+        'LBW',
+        'Stumped',
+        'Hit wicket',
+        'Run out',
+        'Mankad (non-striker run out)',
+        'Hit the ball twice',
+        'Obstructing the field',
+        'Timed out',
+        'Retired out'
+      ];
+      const root = document.getElementById('scoreModalContent');
+      root.querySelector('#cpWicketDialog')?.remove();
+      let selectedDismissedCode = striker;
+      const getPlayerName = code => playerForCode(code)?.name || code || 'Select batter';
+      const dialog = document.createElement('div');
+      dialog.id = 'cpWicketDialog';
+      dialog.className = 'cp-score-dialog-backdrop';
+      dialog.innerHTML =
+        '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpWicketTitle">' +
+          '<div class="cp-score-dialog-head"><div><div class="eyebrow">WICKET</div><h2 id="cpWicketTitle">How was the batter out?</h2></div>' +
+          '<button type="button" class="cp-dialog-close" data-wicket-cancel aria-label="Close">×</button></div>' +
+          '<div class="cp-dismissed-picker"><div class="cp-dismissed-label">Batter dismissed</div><div class="cp-dismissed-options">' +
+            '<button type="button" class="secondary cp-dismissed-option active" data-dismissed-code="' + String(striker).replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' +
+              'Striker · ' + esc(getPlayerName(striker)) + '</button>' +
+            '<button type="button" class="secondary cp-dismissed-option" data-dismissed-code="' + String(nonStriker).replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' +
+              'Non-striker · ' + esc(getPlayerName(nonStriker)) + '</button>' +
+          '</div></div><div class="cp-dismissal-grid">' +
+            kinds.map(v => '<button type="button" class="secondary cp-dismissal-option" data-dismissal="' +
+              v.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' + v + '</button>').join('') +
+          '</div><p class="notice cp-dismissal-note">Mankad is a run-out of the non-striker. Retired hurt is not a wicket; choose Retired out only when a wicket is being awarded.</p></section>';
+      root.appendChild(dialog);
+      dialog.querySelector('[data-wicket-cancel]').addEventListener('click', () => dialog.remove());
+      dialog.addEventListener('click', e => { if (e.target === dialog) dialog.remove(); });
+      dialog.querySelectorAll('[data-dismissed-code]').forEach(button => button.addEventListener('click', () => {
+        selectedDismissedCode = button.dataset.dismissedCode;
+        dialog.querySelectorAll('[data-dismissed-code]').forEach(b => b.classList.toggle('active', b === button));
+      }));
+      dialog.querySelectorAll('[data-dismissal]').forEach(button => button.addEventListener('click', () => {
+        const dismissal = button.dataset.dismissal;
+        const normalized = dismissal.toLowerCase();
+        const noDelivery = [
+          'mankad (non-striker run out)', 'timed out', 'retired out'
+        ].includes(normalized);
+        const allowedOnFreeHit = [
+          'run out', 'mankad (non-striker run out)',
+          'hit the ball twice', 'obstructing the field'
+        ].includes(normalized);
+        if (inn.freeHit && action.legal !== false && !allowedOnFreeHit) {
+          showToast('Free hit: this dismissal is not allowed.');
+          return;
+        }
+        dialog.remove();
+        recordPlayerDelivery(m, {
+          ...action,
+          type: 'wicket',
+          dismissal,
+          dismissedCode: selectedDismissedCode,
+          legal: noDelivery ? false : action.legal !== false,
+          totalRuns: 0,
+          extras: 0,
+          batterRuns: 0,
+          label: dismissal.toUpperCase()
+        });
+      }));
       return;
     }
 
@@ -809,9 +886,12 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       inn.freeHit &&
       type === 'wicket' &&
       action.legal &&
-      !['run out', 'mankad', 'obstructing field'].includes(
-        String(action.dismissal).toLowerCase()
-      )
+      ![
+        'run out',
+        'mankad (non-striker run out)',
+        'hit the ball twice',
+        'obstructing the field'
+      ].includes(String(action.dismissal).toLowerCase())
     ) {
       showToast('Free hit: this dismissal is not allowed.');
       return;
@@ -918,8 +998,12 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
           dismissed.out = true;
           dismissed.dismissal = action.dismissal || 'Wicket';
 
-          // Your requested rule: credit the bowler except for ordinary Run out.
-          if (String(action.dismissal||'').toLowerCase() !== 'run out') {
+          // Only bowled, caught, caught & bowled, LBW, stumped, and hit wicket
+          // are credited to the bowler. Other dismissals are not bowler wickets.
+          const dismissalKey = String(action.dismissal || '').toLowerCase();
+          if ([
+            'bowled', 'caught', 'caught & bowled', 'lbw', 'stumped', 'hit wicket'
+          ].includes(dismissalKey)) {
             bowl.wickets = (Number(bowl.wickets)||0) + 1;
           }
         }
