@@ -430,7 +430,7 @@ async function authAction(mode){
   const password=document.getElementById('authPassword')?.value||'';
   const createBtn=document.getElementById('signUpBtn');
   const loginBtn=document.getElementById('signInBtn');
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     showToast('Enter a valid email address.');
     setAuthStatus('Enter the email address for your Cricket Pro account.');
     document.getElementById('authEmail')?.focus();return;
