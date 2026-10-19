@@ -288,6 +288,13 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     originalRenderScoring(m);
 
     const root = document.getElementById("scoreModalContent");
+    // Remove the legacy batting figures panel from the old scoring layout.
+    root.querySelectorAll(".panel").forEach(panel => {
+      const heading = panel.querySelector(".panel-title h3");
+      if (heading && heading.textContent.trim().toLowerCase() === "batting figures") {
+        panel.remove();
+      }
+    });
     const oldWide = root.querySelector('[data-extra="wide"]');
     if (!oldWide) return;
 
