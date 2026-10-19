@@ -1759,17 +1759,10 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     recordDeliveryBeforeBowlerPicker(match,action);
     const current=ensureInnings(match,Number(match.innings)||1);
     const ballsAfter=Number(current.balls)||0;
-    const overBefore=Math.floor(ballsBefore/6);
-    const overAfter=Math.floor(ballsAfter/6);
-    if(ballsAfter>ballsBefore && overAfter>overBefore){
-      // Wait until every scoring wrapper and render has completed. Use the body-mounted
-      // dialog so the next-over picker remains visible even if the score panel re-renders.
-      setTimeout(()=>{
-        if(match.status==='COMPLETED' || match._cpEndingDialogOpen) return;
-        showNextBowlerDialog(match,current,previousBowler);
-      }, 60);
-    }
+    // The final boundary watcher at the end of this script handles the popup,
+    // after all wicket and match-ending wrappers have run.
   };
+  window.cpShowNextOverBowlerDialog = showNextBowlerDialog;
 })();
 /* In-app wicket flow: circular identity badges, quick player creation, and batter selection. */
 (function installWicketChoicePopups(){
@@ -1893,6 +1886,36 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       document.getElementById('cpWicketChoiceDialog')?.remove();
       document.dispatchEvent(new CustomEvent('cp:match-ended',{detail:{match}}));
     });
+  };
+})();
+
+/* Final next-over watcher: wraps the fully composed scoring function so the
+   over boundary is detected after every scoring/wicket/match-end wrapper. */
+(function installFinalOverBoundaryWatcher(){
+  const recordAfterAllScoringWrappers = recordPlayerDelivery;
+  recordPlayerDelivery = function(match, action) {
+    const inningsNumber = Number(match.innings) || 1;
+    const beforeInnings = ensureInnings(match, inningsNumber);
+    const ballsBefore = Number(beforeInnings.balls) || 0;
+    const previousBowlerCode = beforeInnings.bowlerCode || '';
+    const result = recordAfterAllScoringWrappers(match, action);
+    const afterInnings = ensureInnings(match, Number(match.innings) || inningsNumber);
+    const ballsAfter = Number(afterInnings.balls) || 0;
+    const crossedOverBoundary = ballsAfter > ballsBefore &&
+      Math.floor(ballsAfter / 6) > Math.floor(ballsBefore / 6);
+    if (crossedOverBoundary) {
+      setTimeout(() => {
+        if (match.status === 'COMPLETED' || match._cpEndingDialogOpen) return;
+        if (typeof window.cpShowNextOverBowlerDialog === 'function') {
+          window.cpShowNextOverBowlerDialog(
+            match,
+            ensureInnings(match, Number(match.innings) || inningsNumber),
+            previousBowlerCode
+          );
+        }
+      }, 180);
+    }
+    return result;
   };
 })();
 </script>
