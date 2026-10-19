@@ -206,7 +206,7 @@
 </section>
 
 <section class="page-view" id="page-account">
-<div class="section-heading"><div><h2>Your cricket community starts here</h2><p>Secure sign-in with your mobile number and an SMS code.</p></div><span class="status upcoming">PHONE OTP</span></div>
+<div class="section-heading"><div><h2>Your cricket community starts here</h2><p>Sign in securely with your email and password.</p></div><span class="status upcoming">EMAIL LOGIN</span></div>
 <div class="auth-shell">
   <div class="auth-visual">
     <div class="auth-brand"><span class="auth-brandmark">C</span><span>CRICKET <em>PRO</em></span></div>
@@ -221,16 +221,15 @@
   <div class="auth-form-wrap"><div class="auth-form">
     <div class="eyebrow">WELCOME TO CRICKET PRO</div>
     <h2>Sign in or join</h2>
-    <p class="auth-subtitle">Use your phone number. We’ll text you a one-time verification code.</p>
+    <p class="auth-subtitle">Create an account with your username, email and password, or sign in with your email.</p>
     <p id="authStatus" class="auth-status" role="status" aria-live="polite">Checking your connection…</p>
-    <div class="field"><label for="authUsername">Username <span style="font-weight:500;color:var(--muted)">(new accounts)</span></label><input id="authUsername" type="text" placeholder="Choose a username" autocomplete="username" maxlength="24"></div>
-    <div class="field"><label for="authPhone">Mobile number</label><input id="authPhone" type="tel" placeholder="+91 98765 43210" autocomplete="tel" inputmode="tel"></div>
-    <div class="field" id="authOtpWrap" style="display:none"><label for="authOtp">SMS verification code</label><input id="authOtp" type="text" placeholder="Enter the code from SMS" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></div>
-    <div class="form-actions"><button class="primary" id="signUpBtn">Create account</button><button class="secondary" id="signInBtn">Sign in</button></div>
-    <div class="auth-verify-row"><button class="primary" id="authVerifyBtn" disabled>Verify code & continue</button></div>
+    <div class="field"><label for="authUsername">Username <span style="font-weight:500;color:var(--muted)">(required for new accounts)</span></label><input id="authUsername" type="text" placeholder="Choose a username" autocomplete="username" maxlength="24"></div>
+    <div class="field"><label for="authEmail">Email address</label><input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" required></div>
+    <div class="field"><label for="authPassword">Password</label><input id="authPassword" type="password" placeholder="Enter your password" autocomplete="current-password" minlength="8" required></div>
+    <div class="form-actions"><button class="primary" id="signUpBtn" type="button">Create account</button><button class="secondary" id="signInBtn" type="button">Sign in</button></div>
     <div class="auth-signed-row"><div><b id="signedInName">Not signed in</b><br><small>Account status</small></div><button class="secondary" id="signOutBtn" disabled>Sign out</button></div>
     <div class="auth-divider">YOUR CRICKET. YOUR COMMUNITY.</div>
-    <div class="auth-privacy"><span>●</span><div>Your phone number is used to verify your account. Never share your SMS code with anyone.</div></div>
+    <div class="auth-privacy"><span>●</span><div>Use a strong password and never share it with anyone. Email confirmation may be required when creating an account.</div></div>
   </div></div>
 </div>
 </section>
@@ -332,7 +331,7 @@ let externalRecords=[];let joinRequests=[];let profileClaims=[];let demoAccount=
 try{const x=JSON.parse(localStorage.getItem('cricketProPlatformV1')||'{}');externalRecords=Array.isArray(x.externalRecords)?x.externalRecords:[];joinRequests=Array.isArray(x.joinRequests)?x.joinRequests:[];profileClaims=Array.isArray(x.profileClaims)?x.profileClaims:[];demoAccount=x.demoAccount||null;selectedPlan=x.selectedPlan||'free';registeredDevices=Array.isArray(x.registeredDevices)&&x.registeredDevices.length?x.registeredDevices:registeredDevices}catch(e){}
 function persistPlatform(){try{localStorage.setItem('cricketProPlatformV1',JSON.stringify({externalRecords,joinRequests,profileClaims,demoAccount,selectedPlan,registeredDevices}))}catch(e){}}
 function detectDeviceName(){const ua=navigator.userAgent||'';return /Android/i.test(ua)?'Android device':/iPhone|iPad/i.test(ua)?'Apple mobile device':/Macintosh/i.test(ua)?'Mac computer':/Windows/i.test(ua)?'Windows computer':'This browser'}
-function makePlayerCode(name){const letters=String(name||'PLAYER').toUpperCase().replace(/[^A-Z]/g,'')||'PLAY';const used=new Set(players.map(p=>p.code));for(let tries=0;tries<1000;tries++){let part='';for(let i=0;i<4;i++)part+=letters[Math.floor(Math.random()*letters.length)];const code=part+String(Math.floor(Math.random()*100)).padStart(2,'0');if(!used.has(code))return code}return (letters.slice(0,4).padEnd(4,'X')+String(Math.floor(Math.random()*100)).padStart(2,'0'))}
+function makePlayerCode(name){const letters=(String(name||'PLAY').toUpperCase().replace(/[^A-Z]/g,'')||'PLAY').slice(0,4).padEnd(4,'X');const used=new Set([...players,...cloudPlayers].map(p=>String(p.code||'').toUpperCase()));for(let tries=0;tries<900;tries++){const number=10+Math.floor(Math.random()*90);const code=letters+String(number);if(!used.has(code))return code}throw new Error('Could not create a unique player code. Please try again.')}
 function renderProfileClaims(){const queue=document.getElementById('profileClaimsQueue');if(!queue)return;document.getElementById('claimCount').textContent=`${profileClaims.filter(c=>c.status==='pending').length} pending`;document.getElementById('demoAccountStatus').textContent=demoAccount?`Demo signed in as ${demoAccount.email}. This is not a verified account.`:'No demo account signed in. Real email verification and secure login require the cloud backend.';queue.className=profileClaims.length?'':'empty';queue.innerHTML=profileClaims.length?profileClaims.map(c=>`<div class="result-card"><b>${esc(c.playerName)} · ${esc(c.code)}</b><div class="match-sub">Claim requested by ${esc(c.email)} · Created by ${esc(c.creator||'Unknown creator')}</div><div class="record-actions"><span class="record-status ${c.status==='approved'?'approved':c.status==='rejected'?'rejected':'pending'}">${esc(c.status.toUpperCase())}</span>${c.status==='pending'?`<button class="primary" data-claim-approve="${esc(c.id)}">Approve (demo)</button><button class="secondary" data-claim-reject="${esc(c.id)}">Reject</button>`:''}</div></div>`).join(''):'No profile claims waiting for review.';queue.querySelectorAll('[data-claim-approve]').forEach(b=>b.addEventListener('click',()=>{const c=profileClaims.find(x=>x.id===b.dataset.claimApprove);if(!c)return;c.status='approved';c.reviewedBy=displayName;c.reviewedAt=new Date().toISOString();const p=players.find(x=>x.code===c.code);if(p){p.profileStatus='claimed';p.claimedBy=c.email;p.claimedAt=c.reviewedAt}persistData();persistPlatform();renderProfileClaims();renderProfiles();showToast('Profile claim approved in demo only.')}));queue.querySelectorAll('[data-claim-reject]').forEach(b=>b.addEventListener('click',()=>{const c=profileClaims.find(x=>x.id===b.dataset.claimReject);if(c){c.status='rejected';c.reviewedBy=displayName;c.reviewedAt=new Date().toISOString();persistPlatform();renderProfileClaims();showToast('Profile claim rejected in demo.')}}))}
 document.getElementById('demoSignInForm').addEventListener('submit',e=>{e.preventDefault();const email=document.getElementById('demoAccountEmail').value.trim().toLowerCase();if(!email){showToast('Enter an email address');return}demoAccount={email,displayName,createdAt:new Date().toISOString()};persistPlatform();renderProfileClaims();showToast('Demo sign-in complete; no real email was sent.')});
 document.getElementById('claimProfileForm').addEventListener('submit',e=>{e.preventDefault();if(!demoAccount){showToast('Sign in to your demo account first.');return}const code=document.getElementById('claimPlayerCode').value.trim().toUpperCase();const p=players.find(x=>x.code===code);if(!p){showToast('Player ID not found in this browser workspace.');return}if(p.claimedBy){showToast('This player profile is already claimed.');return}if(profileClaims.some(c=>c.code===code&&c.email===demoAccount.email&&c.status==='pending')){showToast('Your request is already pending.');return}profileClaims.unshift({id:'claim-'+Date.now(),code,playerName:p.name,email:demoAccount.email,creator:p.createdBy||displayName,status:'pending',createdAt:new Date().toISOString()});persistPlatform();renderProfileClaims();e.target.reset();showToast('Profile claim submitted for creator review (demo).')});
@@ -424,111 +423,66 @@ function bootSupabase(){
 }
 function saveCloudConfig(){const url=document.getElementById('supabaseUrl').value.trim().replace(/\/$/,'');const key=document.getElementById('supabaseKey').value.trim();if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)){showToast('Enter a valid Supabase Project URL');return}if(!key){showToast('Enter the publishable / anon key');return}localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify({url,key}));bootSupabase();showToast('Cloud configuration saved in this browser')}
 async function testCloud(){if(!supabaseClient){saveCloudConfig();if(!supabaseClient)return}setCloudStatus('Testing');try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;const {error:dbError}=await supabaseClient.from('community_items').select('id').limit(1);if(dbError)throw dbError;setCloudStatus('Connected',true);setAuthStatus(data.session?.user?`Signed in as ${cloudUserLabel(data.session.user)}`:'Backend reachable. Sign in to continue.');showToast('Supabase connection successful')}catch(e){setCloudStatus('Connection failed');document.getElementById('cloudHelp').textContent='Connection failed: '+e.message+' — confirm the project URL/key and run cricket_pro_schema.sql in Supabase SQL Editor.';showToast('Connection failed. Check setup details.')}}
-let cpPendingOtpPhone='', cpPendingOtpUsername='';
 async function authAction(mode){
   if(!supabaseClient){showToast('Supabase is not connected');setAuthStatus('Supabase connection is missing. Open Settings to check the project connection.');return}
   const username=(document.getElementById('authUsername')?.value||'').trim();
-  const phone=(document.getElementById('authPhone')?.value||'').trim().replace(/[\s().-]/g,'');
-  const otp=(document.getElementById('authOtp')?.value||'').trim().replace(/\s/g,'');
-  const otpWrap=document.getElementById('authOtpWrap');
+  const email=(document.getElementById('authEmail')?.value||'').trim().toLowerCase();
+  const password=document.getElementById('authPassword')?.value||'';
   const createBtn=document.getElementById('signUpBtn');
   const loginBtn=document.getElementById('signInBtn');
-  const verifyBtn=document.getElementById('authVerifyBtn');
-
-  if(mode==='signup'||mode==='login'){
-    if(mode==='signup'&&!/^[A-Za-z0-9_.-]{3,24}$/.test(username)){
-      showToast('Choose a username with 3–24 letters, numbers, dots, dashes or underscores.');
-      setAuthStatus('For a new account, enter a username first.');
-      document.getElementById('authUsername')?.focus();
-      return;
-    }
-    if(!/^\+[1-9]\d{7,14}$/.test(phone)){
-      showToast('Enter your phone number with country code, e.g. +91 9876543210.');
-      setAuthStatus('Include + and the country code in your mobile number.');
-      document.getElementById('authPhone')?.focus();
-      return;
-    }
-    try{
-      setAuthStatus('Sending SMS code…');
-      if(createBtn)createBtn.disabled=true;
-      if(loginBtn)loginBtn.disabled=true;
-      const {error}=await supabaseClient.auth.signInWithOtp({
-        phone,
-        options:{shouldCreateUser:mode==='signup',...(mode==='signup'?{data:{username,display_name:username}}:{})}
-      });
-      if(error)throw error;
-      cpPendingOtpPhone=phone;
-      cpPendingOtpUsername=mode==='signup'?username:'';
-      if(otpWrap)otpWrap.style.display='block';
-      if(verifyBtn)verifyBtn.disabled=false;
-      if(createBtn)createBtn.textContent='Resend code';
-      if(loginBtn)loginBtn.textContent='Resend sign-in code';
-      const phoneField=document.getElementById('authPhone');
-      if(phoneField)phoneField.value=phone;
-      setAuthStatus('Code sent to '+phone+'. Enter the SMS code below to continue.');
-      document.getElementById('authOtp')?.focus();
-      showToast('SMS code requested');
-    }catch(e){
-      setAuthStatus('Could not send SMS code: '+(e.message||'Check phone auth and SMS settings.'));
-      showToast(e.message||'Could not send SMS code');
-    }finally{
-      if(createBtn)createBtn.disabled=false;
-      if(loginBtn)loginBtn.disabled=false;
-    }
-    return;
+  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){
+    showToast('Enter a valid email address.');
+    setAuthStatus('Enter the email address for your Cricket Pro account.');
+    document.getElementById('authEmail')?.focus();return;
   }
-
-  if(!cpPendingOtpPhone){
-    showToast('Request an SMS code first');
-    setAuthStatus('Choose Create account or Sign in to request your SMS code.');
-    return;
+  if(password.length<8){
+    showToast('Your password must be at least 8 characters.');
+    setAuthStatus('Enter a password with at least 8 characters.');
+    document.getElementById('authPassword')?.focus();return;
   }
-  if(!/^\d{4,8}$/.test(otp)){
-    showToast('Enter the SMS code you received');
-    setAuthStatus('Enter the verification code sent to '+cpPendingOtpPhone+'.');
-    document.getElementById('authOtp')?.focus();
-    return;
+  if(mode==='signup'&&!/^[A-Za-z0-9_.-]{3,24}$/.test(username)){
+    showToast('Choose a username with 3–24 letters, numbers, dots, dashes or underscores.');
+    setAuthStatus('For a new account, enter a username first.');
+    document.getElementById('authUsername')?.focus();return;
   }
   try{
-    if(verifyBtn)verifyBtn.disabled=true;
-    setAuthStatus('Verifying your code…');
-    const {data,error}=await supabaseClient.auth.verifyOtp({phone:cpPendingOtpPhone,token:otp,type:'sms'});
-    if(error)throw error;
-    currentCloudUser=data.user||data.session?.user||null;
-    if(!currentCloudUser)throw new Error('No user session was returned. Please try again.');
-    if(cpPendingOtpUsername){
-      const update=await supabaseClient.auth.updateUser({data:{username:cpPendingOtpUsername,display_name:cpPendingOtpUsername}});
-      if(!update.error&&update.data?.user)currentCloudUser=update.data.user;
+    if(createBtn)createBtn.disabled=true;if(loginBtn)loginBtn.disabled=true;
+    if(mode==='signup'){
+      setAuthStatus('Creating your account…');
+      const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{username,display_name:username}}});
+      if(error)throw error;
+      currentCloudUser=data.user||data.session?.user||null;
+      if(data.session&&currentCloudUser)await finishCloudSignIn(currentCloudUser,'Account created and signed in successfully.');
+      else{setAuthStatus('Account created. Check your email for a confirmation link, then return here and sign in.');showToast('Check your email to confirm your account');}
+    }else if(mode==='login'){
+      setAuthStatus('Signing in…');
+      const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+      if(error)throw error;
+      currentCloudUser=data.user||data.session?.user||null;
+      if(!currentCloudUser)throw new Error('No user session was returned. Please try again.');
+      await finishCloudSignIn(currentCloudUser,'You are signed in successfully.');
     }
-    const finalName=cpPendingOtpUsername||currentCloudUser.user_metadata?.username||currentCloudUser.user_metadata?.display_name||currentCloudUser.phone||'Cricket Player';
-    displayName=finalName;
-    persistData();
-    const profileNameEl=document.getElementById('profileName');
-    const avatarEl=document.getElementById('avatar');
-    if(profileNameEl)profileNameEl.textContent=displayName;
-    if(avatarEl)avatarEl.textContent=displayName.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
-    if(typeof refreshHomeGreeting==='function')refreshHomeGreeting();
-    if(typeof renderProfiles==='function')renderProfiles();
-    setAuthStatus('You’re signed in as '+finalName+'. Your phone has been verified.');
-    setCloudStatus('Connected',true);
-    showToast('Phone verified — signed in');
-    if(otpWrap)otpWrap.style.display='none';
-    const otpField=document.getElementById('authOtp');if(otpField)otpField.value='';
-    if(createBtn)createBtn.textContent='Create account';
-    if(loginBtn)loginBtn.textContent='Sign in';
-    if(verifyBtn)verifyBtn.disabled=true;
-    cpPendingOtpPhone='';cpPendingOtpUsername='';
-    await syncOwnedMatches().catch(e=>console.warn('Initial cloud sync pending:',e.message));
   }catch(e){
-    setAuthStatus('Verification failed: '+(e.message||'Please check the code and try again.'));
-    showToast(e.message||'Verification failed');
-    if(verifyBtn)verifyBtn.disabled=false;
-  }
+    setAuthStatus((mode==='signup'?'Could not create account: ':'Sign-in failed: ')+(e.message||'Please check your details and try again.'));
+    showToast(e.message||'Authentication failed');
+  }finally{if(createBtn)createBtn.disabled=false;if(loginBtn)loginBtn.disabled=false}
+}
+async function finishCloudSignIn(user,message){
+  currentCloudUser=user;
+  const finalName=user.user_metadata?.username||user.user_metadata?.display_name||user.email?.split('@')[0]||'Cricket Player';
+  displayName=finalName;persistData();
+  const profileNameEl=document.getElementById('profileName'),avatarEl=document.getElementById('avatar');
+  if(profileNameEl)profileNameEl.textContent=displayName;
+  if(avatarEl)avatarEl.textContent=displayName.split(/\\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
+  if(typeof refreshHomeGreeting==='function')refreshHomeGreeting();
+  if(typeof renderProfiles==='function')renderProfiles();
+  setAuthStatus(message+' Signed in as '+finalName+'.');setCloudStatus('Connected',true);showToast('Signed in to Cricket Pro');
+  await syncOwnedMatches().catch(e=>console.warn('Initial cloud sync pending:',e.message));
 }
 async function signOutCloud(){if(!supabaseClient)return;try{const {error}=await supabaseClient.auth.signOut();if(error)throw error;currentCloudUser=null;setAuthStatus('Not signed in.');showToast('Signed out')}catch(e){showToast(e.message)}}
 
 
-document.getElementById('saveCloudConfig').addEventListener('click',saveCloudConfig);document.getElementById('testCloudConnection').addEventListener('click',testCloud);document.getElementById('signUpBtn').addEventListener('click',()=>authAction('signup'));document.getElementById('signInBtn').addEventListener('click',()=>authAction('login'));document.getElementById('authVerifyBtn').addEventListener('click',()=>authAction('verify'));document.getElementById('signOutBtn').addEventListener('click',signOutCloud);renderMatchFeeds();bootSupabase();
+document.getElementById('saveCloudConfig').addEventListener('click',saveCloudConfig);document.getElementById('testCloudConnection').addEventListener('click',testCloud);document.getElementById('signUpBtn').addEventListener('click',()=>authAction('signup'));document.getElementById('signInBtn').addEventListener('click',()=>authAction('login'));document.getElementById('signOutBtn').addEventListener('click',signOutCloud);renderMatchFeeds();bootSupabase();
 
 // Keep navigation renders current as local demo data changes.
 const originalGo=go;go=function(page){originalGo(page);if(page==='discover')renderDiscover();if(page==='records'){renderRecordPlayerOptions();renderExternalRecords()}if(page==='pro')renderDevices();if(page==='profiles')renderProfileClaims()};
