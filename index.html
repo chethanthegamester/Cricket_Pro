@@ -284,9 +284,73 @@ function cloudConfig(){try{return JSON.parse(localStorage.getItem(CLOUD_CONFIG_K
 function setCloudStatus(label,ok=false){const el=document.getElementById('cloudStatus');if(!el)return;el.textContent=label.toUpperCase();el.className='status '+(ok?'':'upcoming')}
 function cloudUserLabel(user){const meta=user?.user_metadata||{};return meta.username||meta.display_name||user?.phone||user?.email||'Cricket Pro user'}
 function setAuthStatus(text){const el=document.getElementById('authStatus');if(el)el.textContent=text;const out=document.getElementById('signOutBtn');if(out)out.disabled=!currentCloudUser}
-async function loadCloudMatches(){if(!supabaseClient)return;try{const {data,error}=await supabaseClient.from('community_items').select('id,owner_id,kind,name,data,created_at').eq('is_public',true).in('kind',['match','team','player']).limit(500);if(error)throw error;const rows=data||[];const unpack=row=>({...((row.data&&typeof row.data==='object')?row.data:{}),id:row.id,owner_id:row.owner_id,name:row.name,created_at:row.created_at});cloudMatches=rows.filter(r=>r.kind==='match').map(unpack);cloudTeams=rows.filter(r=>r.kind==='team').map(unpack);cloudPlayers=rows.filter(r=>r.kind==='player').map(unpack);renderMatchFeeds();if(document.getElementById('page-scorecards').classList.contains('active'))renderSearch(document.getElementById('matchSearch').value)}catch(e){console.warn('Public match list could not be loaded:',e.message)}}
-async function syncOwnedMatches(){if(!supabaseClient||!currentCloudUser)return;const owner_id=currentCloudUser.id;const stamp=new Date().toISOString();const payload=[...savedMatches.map(m=>({id:String(m.id),owner_id,kind:'match',name:`${m.a} vs ${m.b}`,is_public:true,data:{...m,owner_id,updatedAt:stamp}})),...teams.map(t=>({id:String(t.id),owner_id,kind:'team',name:t.name,is_public:true,data:{...t,owner_id,updatedAt:stamp}})),...players.map(p=>({id:String(p.code),owner_id,kind:'player',name:p.name,is_public:true,data:{...p,owner_id,updatedAt:stamp}}))];if(!payload.length)return;const {error}=await supabaseClient.from('community_items').upsert(payload,{onConflict:'id'});if(error)throw error;await loadCloudMatches()}
-function bootSupabase(){const c=cloudConfig();const u=document.getElementById('supabaseUrl'),k=document.getElementById('supabaseKey');if(u&&c.url)u.value=c.url;if(k&&c.key)k.value=c.key;if(c.url&&c.key&&window.supabase?.createClient){try{supabaseClient=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});setCloudStatus('Configured');supabaseClient.auth.getSession().then(async({data,error})=>{if(error)throw error;currentCloudUser=data.session?.user||null;setAuthStatus(currentCloudUser?`Signed in as ${cloudUserLabel(currentCloudUser)}`:'Not signed in.');if(currentCloudUser){setCloudStatus('Connected',true);await syncOwnedMatches().catch(e=>console.warn('Initial sync:',e.message))}else await loadCloudMatches();}).catch(e=>{setCloudStatus('Check configuration');setAuthStatus('Session could not be loaded: '+e.message)});supabaseClient.auth.onAuthStateChange((_event,session)=>{currentCloudUser=session?.user||null;if(currentCloudUser){setAuthStatus(`Signed in as ${cloudUserLabel(currentCloudUser)}`);loadCloudMatches().then(()=>syncOwnedMatches().catch(e=>console.warn(e.message)))}else{setAuthStatus('Not signed in.');loadCloudMatches()}})}catch(e){setCloudStatus('Configuration error');setAuthStatus(e.message)}}else{setCloudStatus('Not connected');setAuthStatus('Not signed in.')}}
+async function loadCloudMatches(){
+  if(!supabaseClient)return;
+  try{
+    const {data,error}=await supabaseClient.from('community_items')
+      .select('id,owner_id,kind,name,data,created_at')
+      .eq('is_public',true).in('kind',['match','team','player']).limit(500);
+    if(error)throw error;
+    const rows=data||[];
+    const unpack=row=>({...((row.data&&typeof row.data==='object')?row.data:{}),id:row.id,owner_id:row.owner_id,name:row.name,created_at:row.created_at});
+    cloudMatches=rows.filter(r=>r.kind==='match').map(unpack);
+    cloudTeams=rows.filter(r=>r.kind==='team').map(unpack);
+    cloudPlayers=rows.filter(r=>r.kind==='player').map(unpack);
+    const merge=(local,cloud,key)=>{const map=new Map();[...cloud,...local].forEach(item=>{if(item&&item[key]!=null)map.set(String(item[key]),{...map.get(String(item[key])),...item})});return [...map.values()]};
+    teams=merge(teams,cloudTeams,'id');
+    players=merge(players,cloudPlayers,'code');
+    savedMatches=merge(savedMatches,cloudMatches,'id');
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({savedMatches,teams,players,clubs,tournaments,clubPlayerLinks,displayName,nextPlayerCode,profileDetails}));}catch(_){}
+    renderTeams();renderClubs();renderTournaments();renderRecent();renderStats();
+    const search=document.getElementById('matchSearch');
+    if(search&&document.getElementById('page-scorecards')?.classList.contains('active'))renderSearch(search.value);
+  }catch(e){console.warn('Cloud records could not be loaded:',e.message);setAuthStatus('Cloud records could not be loaded: '+e.message);}
+}
+async function syncOwnedMatches(){
+  if(!supabaseClient||!currentCloudUser)return;
+  const owner_id=currentCloudUser.id,stamp=new Date().toISOString();
+  const payload=[
+    ...savedMatches.map(m=>({id:String(m.id),owner_id,kind:'match',name:`${m.a} vs ${m.b}`,is_public:true,data:{...m,owner_id,updatedAt:stamp}})),
+    ...teams.map(t=>({id:String(t.id),owner_id,kind:'team',name:t.name,is_public:true,data:{...t,owner_id,updatedAt:stamp}})),
+    ...players.map(p=>({id:String(p.code),owner_id,kind:'player',name:p.name,is_public:true,data:{...p,owner_id,updatedAt:stamp}}))
+  ];
+  if(!payload.length)return;
+  const {error}=await supabaseClient.from('community_items').upsert(payload,{onConflict:'id'});
+  if(error){setAuthStatus('Cloud sync failed: '+error.message);throw error;}
+  await loadCloudMatches();
+}
+function bootSupabase(){
+  const c=cloudConfig();
+  const u=document.getElementById('supabaseUrl'),k=document.getElementById('supabaseKey');
+  if(u&&c.url)u.value=c.url;
+  if(k&&c.key)k.value=c.key;
+  if(!c.url||!c.key||!window.supabase?.createClient){
+    setCloudStatus('Not connected');
+    setAuthStatus('Save your Supabase URL and publishable key to enable cloud sync.');
+    return;
+  }
+  try{
+    supabaseClient=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    setCloudStatus('Configured');
+    supabaseClient.auth.getSession().then(async({data,error})=>{
+      if(error)throw error;
+      currentCloudUser=data.session?.user||null;
+      setAuthStatus(currentCloudUser?`Signed in as ${cloudUserLabel(currentCloudUser)}`:'Not signed in.');
+      await loadCloudMatches();
+      if(currentCloudUser){setCloudStatus('Connected',true);await syncOwnedMatches();}
+    }).catch(e=>{setCloudStatus('Check configuration');setAuthStatus('Session could not be loaded: '+e.message);});
+    supabaseClient.auth.onAuthStateChange((_event,session)=>{
+      currentCloudUser=session?.user||null;
+      if(currentCloudUser){
+        setAuthStatus(`Signed in as ${cloudUserLabel(currentCloudUser)}`);
+        loadCloudMatches().then(()=>syncOwnedMatches().catch(e=>{console.warn(e);setAuthStatus('Cloud sync failed: '+e.message);}));
+      }else{
+        setAuthStatus('Not signed in.');
+        loadCloudMatches();
+      }
+    });
+  }catch(e){setCloudStatus('Configuration error');setAuthStatus(e.message);}
+}
 function saveCloudConfig(){const url=document.getElementById('supabaseUrl').value.trim().replace(/\/$/,'');const key=document.getElementById('supabaseKey').value.trim();if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)){showToast('Enter a valid Supabase Project URL');return}if(!key){showToast('Enter the publishable / anon key');return}localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify({url,key}));bootSupabase();showToast('Cloud configuration saved in this browser')}
 async function testCloud(){if(!supabaseClient){saveCloudConfig();if(!supabaseClient)return}setCloudStatus('Testing');try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;const {error:dbError}=await supabaseClient.from('community_items').select('id').limit(1);if(dbError)throw dbError;setCloudStatus('Connected',true);setAuthStatus(data.session?.user?`Signed in as ${cloudUserLabel(data.session.user)}`:'Backend reachable. Sign in to continue.');showToast('Supabase connection successful')}catch(e){setCloudStatus('Connection failed');document.getElementById('cloudHelp').textContent='Connection failed: '+e.message+' — confirm the project URL/key and run cricket_pro_schema.sql in Supabase SQL Editor.';showToast('Connection failed. Check setup details.')}}
 let cpPendingOtpPhone='', cpPendingOtpUsername='';
@@ -1257,7 +1321,6 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     }));
   }
 })();
-</script></body></html>
 
 /* Cricket Pro phone OTP and match awards additions */
 (function installPhoneOtpAndMatchAwards() {
@@ -1428,3 +1491,6 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     }
   }
 })();
+</script>
+</body>
+</html>
