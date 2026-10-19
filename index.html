@@ -38,7 +38,7 @@
 .cp-batter-line strong{font-size:15px}
 .cp-batter-line>span:nth-child(3),.cp-batter-line>span:nth-child(4){font-size:12px}
 .cp-batter-boundaries{grid-column:auto}
-.cp-keypad-button{background:#ed8b00!important;border-color:#c87800!important;color:#fff!important;min-height:46px;font-weight:850}
+.cp-keypad-button{min-height:46px;font-weight:850}
 .cp-keypad-button:hover{filter:brightness(1.06)}
 #scoreBowler{cursor:pointer}
 .cp-bowler-grid{display:grid;grid-template-columns:1fr;gap:8px}
@@ -980,7 +980,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
   };
 })();
 
-/* Stumps-inspired scoring screen: compact batters, modal bowler selection, clean keypad. */
+/* Stumps-inspired scoring screen: keep Cricket Pro green, compact batter table, visible wicket button. */
 (function polishScoringPanels() {
   const previousRenderScoring = renderScoring;
   renderScoring = function(match) {
@@ -1000,7 +1000,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     compact.id = 'cpCompactBattingFigures';
     compact.className = 'cp-batter-summary';
     compact.innerHTML = '<div class="cp-batter-summary-title">BATSMAN</div>' +
-      '<div class="cp-batter-head"><span>Player</span><span>R</span><span>4s</span><span>6s</span></div>' +
+      '<div class="cp-batter-head"><span>Batter</span><span>R</span><span>4s</span><span>6s</span></div>' +
       (activeCodes.length ? activeCodes.map(code => {
         const batter = innings.batters?.[code] || {};
         const player = playerForCode(code);
@@ -1009,10 +1009,34 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
           '</span><strong>' + (Number(batter.runs) || 0) + '</strong><span>' +
           (Number(batter.fours) || 0) + '</span><span>' + (Number(batter.sixes) || 0) + '</span></div>';
       }).join('') : '<p class="notice">Choose the two batters above.</p>');
-    const actions = root.querySelector('#undoBall')?.parentElement;
-    if (actions) root.insertBefore(compact, actions);
-    else root.appendChild(compact);
 
+    // Keep the figures directly beneath the score, like the supplied reference.
+    const scoreCard = root.querySelector('.result-card');
+    if (scoreCard) scoreCard.insertAdjacentElement('afterend', compact);
+    else root.prepend(compact);
+
+    // The earlier extras patch replaces the old button row; add a real wicket control here.
+    const extraActions = root.querySelector('.scoreboard-extra-actions');
+    if (extraActions && !extraActions.querySelector('[data-cp-open-wicket]')) {
+      const wicketButton = document.createElement('button');
+      wicketButton.type = 'button';
+      wicketButton.className = 'secondary score-extra-trigger';
+      wicketButton.dataset.cpOpenWicket = '1';
+      wicketButton.textContent = 'Wicket / Out';
+      extraActions.appendChild(wicketButton);
+      wicketButton.addEventListener('click', () => {
+        const striker = root.querySelector('#scoreStriker');
+        const nonStriker = root.querySelector('#scoreNonStriker');
+        const bowler = root.querySelector('#scoreBowler');
+        if (striker) innings.strikerCode = striker.value;
+        if (nonStriker) innings.nonStrikerCode = nonStriker.value;
+        if (bowler) innings.bowlerCode = bowler.value;
+        persistData();
+        recordPlayerDelivery(match, {type:'wicket', legal:true, totalRuns:0});
+      });
+    }
+
+    // Bowler selection opens an in-app popup, while preserving the existing scoring code.
     const bowler = root.querySelector('#scoreBowler');
     if (bowler && !bowler.dataset.cpPopupBound) {
       bowler.dataset.cpPopupBound = '1';
@@ -1023,10 +1047,8 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       bowler.setAttribute('aria-haspopup', 'dialog');
       bowler.title = 'Choose bowler';
     }
-    root.querySelectorAll('[data-runs]').forEach(btn => {
-      btn.classList.add('cp-keypad-button');
-    });
-    root.querySelectorAll('[data-extra], [data-wicket]').forEach(btn => {
+    // Do not override the site's green score-button theme.
+    root.querySelectorAll('[data-runs], [data-extra], [data-wicket]').forEach(btn => {
       btn.classList.add('cp-keypad-button');
     });
   };
@@ -1038,7 +1060,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     dialog.id = 'cpBowlerDialog';
     dialog.className = 'cp-score-dialog-backdrop';
     dialog.innerHTML = '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpBowlerTitle"><div class="cp-score-dialog-head"><div><div class="eyebrow">BOWLING</div><h2 id="cpBowlerTitle">Select bowler</h2></div><button type="button" class="cp-dialog-close" data-bowler-cancel aria-label="Close">×</button></div><div class="cp-bowler-grid">' +
-      (options.length ? options.map(o => '<button type="button" class="secondary cp-dismissal-option" data-bowler-code="' + o.value.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' + o.textContent + '</button>').join('') : '<p class="notice">Add bowlers to the bowling team roster first.</p>') +
+      (options.length ? options.map(o => '<button type="button" class="secondary cp-dismissal-option" data-bowler-code="' + o.value.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' + esc(o.textContent) + '</button>').join('') : '<p class="notice">Add bowlers to the bowling team roster first.</p>') +
       '</div></section>';
     root.appendChild(dialog);
     dialog.querySelector('[data-bowler-cancel]').addEventListener('click', () => dialog.remove());
