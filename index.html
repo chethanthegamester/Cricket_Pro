@@ -42,6 +42,18 @@
 #scoreModalContent [data-run],#scoreModalContent [data-runs],#scoreModalContent [data-score-run]{background:#b8f34a;color:#11170b;border-color:#b8f34a;font-weight:900}
 #scoreModalContent select{min-height:44px}
 @media(max-width:600px){#scoreModal{padding:8px}#scoreModal .modal{max-height:96dvh!important;border-radius:16px;padding:14px}#scoreModalContent>.result-card:first-child{padding:16px}#scoreModalContent .form-grid{gap:7px}}
+
+/* Compact score keypad inspired by the supplied reference, using Cricket Pro colours */
+#scoreModalContent .scoreboard-extra-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+#scoreModalContent .score-extra-trigger{min-height:48px;font-weight:850;border-radius:10px}
+#scoreModalContent .score-extra-trigger.active{background:var(--green);color:#10160a;border-color:var(--green)}
+#scoreModalContent .score-extra-options{padding:14px;margin:10px 0 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface,rgba(255,255,255,.03))}
+#scoreModalContent .score-extra-options[hidden]{display:none!important}
+#scoreModalContent .score-extra-options h3{margin:0 0 12px;font-size:15px}
+#scoreModalContent .scoreboard-keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#scoreModalContent .scoreboard-keypad button{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;min-height:52px;background:#b8f34a;color:#11170b;border:1px solid #b8f34a;border-radius:9px;font-weight:900}
+#scoreModalContent .scoreboard-keypad button small{font-size:10px;font-weight:650}
+@media(max-width:420px){#scoreModalContent .scoreboard-keypad{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body><div class="app">
@@ -282,37 +294,48 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     // Replace the old fixed +1 buttons.
     const oldControls = oldWide.parentElement;
     oldControls.innerHTML = `
-      <div class="panel" style="grid-column:1/-1;margin-top:8px">
-        <h3>Wides — choose total runs</h3>
-        <div class="form-grid">
-          ${[0,1,2,3,4].map(n =>
-            `<button type="button" class="secondary" data-v3-wide="${n}">
-              WD +${n} · ${n+1} team run${n ? "s" : ""}
-            </button>`
-          ).join("")}
+      <div class="scoreboard-extra-actions">
+        <button type="button" class="secondary score-extra-trigger" data-v3-toggle="wide">＋ Wide</button>
+        <button type="button" class="secondary score-extra-trigger" data-v3-toggle="nb">＋ No-ball</button>
+        <button type="button" class="secondary score-extra-trigger" data-v3-toggle="bye">＋ Bye</button>
+        <button type="button" class="secondary score-extra-trigger" data-v3-toggle="legbye">＋ Leg-bye</button>
+      </div>
+      <div class="score-extra-options" data-v3-options="wide" hidden>
+        <h3>Wide — select extra runs</h3>
+        <div class="scoreboard-keypad">
+          ${[0,1,2,3,4].map(n => `<button type="button" data-v3-wide="${n}">WD +${n}<small>${n+1} total run${n ? "s" : ""}</small></button>`).join("")}
         </div>
-        <h3 style="margin-top:14px">No-balls — choose total runs</h3>
-        <div class="form-grid">
-          ${[0,1,2,3,4,5,6].map(n =>
-            `<button type="button" class="secondary" data-v3-nb="${n}">
-              NB +${n} · ${n+1} team run${n ? "s" : ""}
-            </button>`
-          ).join("")}
+      </div>
+      <div class="score-extra-options" data-v3-options="nb" hidden>
+        <h3>No-ball — select batter runs</h3>
+        <div class="scoreboard-keypad">
+          ${[0,1,2,3,4,5,6].map(n => `<button type="button" data-v3-nb="${n}">NB +${n}<small>${n+1} total run${n ? "s" : ""}</small></button>`).join("")}
         </div>
-        <h3 style="margin-top:14px">Other scoring</h3>
-        <div class="form-grid">
-          ${[1,2,3,4].map(n =>
-            `<button type="button" class="secondary" data-v3-bye="${n}">
-              Bye +${n}
-            </button>`
-          ).join("")}
-          ${[1,2,3,4].map(n =>
-            `<button type="button" class="secondary" data-v3-legbye="${n}">
-              Leg-bye +${n}
-            </button>`
-          ).join("")}
+      </div>
+      <div class="score-extra-options" data-v3-options="bye" hidden>
+        <h3>Bye — select runs</h3>
+        <div class="scoreboard-keypad">
+          ${[1,2,3,4].map(n => `<button type="button" data-v3-bye="${n}">${n} bye${n===1?"":"s"}</button>`).join("")}
+        </div>
+      </div>
+      <div class="score-extra-options" data-v3-options="legbye" hidden>
+        <h3>Leg-bye — select runs</h3>
+        <div class="scoreboard-keypad">
+          ${[1,2,3,4].map(n => `<button type="button" data-v3-legbye="${n}">${n} leg-bye${n===1?"":"s"}</button>`).join("")}
         </div>
       </div>`;
+
+    root.querySelectorAll("[data-v3-toggle]").forEach(btn =>
+      btn.addEventListener("click", () => {
+        const selected = btn.dataset.v3Toggle;
+        root.querySelectorAll("[data-v3-options]").forEach(panel => {
+          panel.hidden = panel.dataset.v3Options !== selected || !panel.hidden;
+        });
+        root.querySelectorAll("[data-v3-toggle]").forEach(b =>
+          b.classList.toggle("active", b === btn && !root.querySelector(`[data-v3-options="${selected}"]`).hidden)
+        );
+      })
+    );
 
     const savePlayers = () => {
       const inn = ensureInnings(m, Number(m.innings) || 1);
