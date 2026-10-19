@@ -151,6 +151,20 @@
 #scoreModalContent .scoreboard-keypad button{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;min-height:52px;background:#b8f34a;color:#11170b;border:1px solid #b8f34a;border-radius:9px;font-weight:900}
 #scoreModalContent .scoreboard-keypad button small{font-size:10px;font-weight:650}
 @media(max-width:420px){#scoreModalContent .scoreboard-keypad{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Circular player identities and quick-add controls in scoring popups */
+.cp-choice-player-list{display:grid;grid-template-columns:1fr;gap:7px;max-height:42vh;overflow:auto;margin:10px 0}
+.cp-choice-player{display:flex;align-items:center;gap:11px;width:100%;text-align:left;min-height:58px;padding:7px 11px}
+.cp-choice-avatar{width:38px;height:38px;min-width:38px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:#233329;border:1px solid #4c6b58;box-shadow:0 0 0 2px #101720}
+.cp-choice-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.cp-choice-avatar .identity-icon{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px}
+.cp-choice-player-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cp-choice-player-text strong{font-size:14px;overflow-wrap:anywhere}
+.cp-choice-player-text small{font-size:11px;color:var(--muted)}
+.cp-quick-add-trigger{width:100%;margin-top:10px;text-align:center;border-style:dashed}
+.cp-quick-player-layer{z-index:45}
+.cp-quick-player-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+@media(max-width:440px){.cp-choice-avatar{width:34px;height:34px;min-width:34px}.cp-choice-player{min-height:52px}}
 </style>
 </head>
 <body><div class="app">
@@ -1612,11 +1626,26 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
         '<div class="cp-bowler-grid">'+
           (roster.length?roster.map(p=>{
             const isPrevious=p.code===previousBowlerCode;
-            return '<button type="button" class="secondary cp-dismissal-option" data-next-bowler-code="'+esc(p.code)+'" '+(isPrevious?'disabled aria-disabled="true"':'')+'>'+
-              esc(p.name)+(isPrevious?' · just bowled':'')+'</button>';
+            return '<button type="button" class="secondary cp-choice-player" data-next-bowler-code="'+esc(p.code)+'" '+(isPrevious?'disabled aria-disabled="true"':'')+'>'+
+              '<span class="cp-choice-avatar">'+badgeIcon(p.icon,p.name,initials(p.name))+'</span><span class="cp-choice-player-text"><strong>'+esc(p.name)+'</strong><small>'+(isPrevious?'Just bowled · choose someone else':esc(p.role||'Player'))+'</small></span></button>';
           }).join(''):'<p class="notice">No players are assigned to the bowling team yet. Add players to that team first.</p>')+
-        '</div></section>';
+        '</div><button type="button" class="secondary cp-quick-add-trigger" data-create-next-bowler>＋ Create a player for this team</button></section>';
     root.appendChild(dialog);
+    dialog.querySelector('[data-create-next-bowler]')?.addEventListener('click',()=>{
+      const teamId=innings.bowlingTeamId||(Number(innings.number)===1?match.teamBId:match.teamAId);
+      root.querySelector('#cpQuickPlayerDialog')?.remove();
+      const quick=document.createElement('div');quick.id='cpQuickPlayerDialog';quick.className='cp-score-dialog-backdrop cp-quick-player-layer';
+      const team=[...(teams||[]),...(cloudTeams||[])].find(t=>t&&t.id===teamId);
+      quick.innerHTML='<section class="cp-score-dialog" role="dialog" aria-modal="true"><div class="cp-score-dialog-head"><div><div class="eyebrow">QUICK ADD</div><h2>Create a player</h2></div><button type="button" class="cp-dialog-close" data-cancel>×</button></div><p class="notice">Add someone to '+esc(team?.name||'this team')+' without leaving scoring.</p><form id="cpNextBowlerQuickForm"><div class="field"><label for="cpNextBowlerQuickName">Player name</label><input id="cpNextBowlerQuickName" required maxlength="70" placeholder="Enter player name"></div><div class="field"><label for="cpNextBowlerQuickRole">Role</label><select id="cpNextBowlerQuickRole"><option>Bowler</option><option>All-rounder</option><option>Batter</option><option>Wicketkeeper</option></select></div><div class="cp-quick-player-actions"><button type="button" class="secondary" data-cancel>Cancel</button><button type="submit" class="primary">＋ Create and select</button></div></form></section>';
+      root.appendChild(quick);quick.querySelectorAll('[data-cancel]').forEach(b=>b.addEventListener('click',()=>quick.remove()));
+      quick.querySelector('#cpNextBowlerQuickForm').addEventListener('submit',e=>{
+        e.preventDefault();const name=quick.querySelector('#cpNextBowlerQuickName').value.trim(),role=quick.querySelector('#cpNextBowlerQuickRole').value;if(!name)return;
+        if([...(players||[]),...(cloudPlayers||[])].some(p=>p&&p.teamId===teamId&&String(p.name||'').toLowerCase()===name.toLowerCase())){showToast('That player is already on this team');return}
+        const code=makePlayerCode(name);nextPlayerCode++;players.push({teamId,name,role,code,icon:'monogram',profileStatus:'unclaimed',createdBy:displayName});persistData();
+        quick.remove();dialog.remove();innings.bowlerCode=code;renderScoring(match);renderRecent();showToast(name+' created and selected as next bowler');
+      });
+      quick.querySelector('#cpNextBowlerQuickName')?.focus();
+    });
     // Keep the picker open until a valid next bowler is selected.
     dialog.querySelectorAll('[data-next-bowler-code]').forEach(button=>button.addEventListener('click',()=>{
       const code=button.dataset.nextBowlerCode;
@@ -1645,107 +1674,85 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     }
   };
 })();
-/* In-app wicket flow: fielder attribution and incoming-batter selection. */
+/* In-app wicket flow: circular identity badges, quick player creation, and batter selection. */
 (function installWicketChoicePopups(){
   const recordBeforeWicketPopups = recordPlayerDelivery;
-
   function uniqueRoster(teamId){
-    const map = new Map();
-    [...(players||[]), ...(cloudPlayers||[])].forEach(p=>{
-      if(p && p.code && p.teamId===teamId && !map.has(p.code)) map.set(p.code,p);
-    });
+    const map=new Map();
+    [...(players||[]),...(cloudPlayers||[])].forEach(p=>{if(p&&p.code&&p.teamId===teamId&&!map.has(p.code))map.set(p.code,p)});
     return [...map.values()];
   }
-  function showPlayerChoice(title, eyebrow, list, excludedCodes, emptyText, onChoose){
-    const root=document.getElementById('scoreModalContent');
-    if(!root) return;
-    root.querySelector('#cpWicketChoiceDialog')?.remove();
-    const available=list.filter(p=>p && p.code && !excludedCodes.includes(p.code));
-    const dialog=document.createElement('div');
-    dialog.id='cpWicketChoiceDialog';
-    dialog.className='cp-score-dialog-backdrop';
-    dialog.innerHTML=
-      '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpWicketChoiceTitle">'+
-        '<div class="cp-score-dialog-head"><div><div class="eyebrow">'+esc(eyebrow)+'</div><h2 id="cpWicketChoiceTitle">'+esc(title)+'</h2></div></div>'+
-        (available.length
-          ? '<div class="cp-dismissal-grid">'+available.map(p=>'<button type="button" class="secondary cp-dismissal-option" data-choice-code="'+esc(p.code)+'">'+esc(p.name)+(p.role?' · '+esc(p.role):'')+'</button>').join('')+'</div>'
-          : '<p class="notice">'+esc(emptyText)+'</p>')+
-      '</section>';
+  function identityMarkup(person){
+    const name=person?.name||'Player';
+    const url=person?.avatarUrl||person?.avatar_url||person?.photoUrl||'';
+    const fallback=badgeIcon(person?.icon||'monogram',name,initials(name));
+    return '<span class="cp-choice-avatar">'+(url?'<img src="'+esc(url)+'" alt="" loading="lazy" onerror="this.remove()">':fallback)+'</span>';
+  }
+  function createQuickPlayer(teamId,afterCreate,parentDialog){
+    const root=document.getElementById('scoreModalContent');if(!root)return;
+    root.querySelector('#cpQuickPlayerDialog')?.remove();
+    const team=[...(teams||[]),...(cloudTeams||[])].find(t=>t&&t.id===teamId);
+    const dialog=document.createElement('div');dialog.id='cpQuickPlayerDialog';dialog.className='cp-score-dialog-backdrop cp-quick-player-layer';
+    dialog.innerHTML='<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpQuickPlayerTitle"><div class="cp-score-dialog-head"><div><div class="eyebrow">QUICK ADD</div><h2 id="cpQuickPlayerTitle">Create a player</h2></div><button type="button" class="cp-dialog-close" data-quick-cancel aria-label="Close">×</button></div><p class="notice">Add someone to '+esc(team?.name||'this team')+' without leaving scoring.</p><form id="cpQuickPlayerForm"><div class="field"><label for="cpQuickPlayerName">Player name</label><input id="cpQuickPlayerName" required maxlength="70" placeholder="Enter player name" autocomplete="off"></div><div class="field"><label for="cpQuickPlayerRole">Role</label><select id="cpQuickPlayerRole"><option>Batter</option><option>Bowler</option><option>All-rounder</option><option>Wicketkeeper</option></select></div><div class="cp-quick-player-actions"><button type="button" class="secondary" data-quick-cancel>Cancel</button><button type="submit" class="primary">＋ Create player</button></div></form></section>';
     root.appendChild(dialog);
-    dialog.querySelectorAll('[data-choice-code]').forEach(button=>button.addEventListener('click',()=>{
-      const chosen=available.find(p=>p.code===button.dataset.choiceCode);
-      if(!chosen) return;
-      dialog.remove();
-      onChoose(chosen);
-    }));
+    dialog.querySelectorAll('[data-quick-cancel]').forEach(b=>b.addEventListener('click',()=>dialog.remove()));
+    dialog.querySelector('#cpQuickPlayerForm').addEventListener('submit',e=>{
+      e.preventDefault();const name=dialog.querySelector('#cpQuickPlayerName').value.trim(),role=dialog.querySelector('#cpQuickPlayerRole').value;
+      if(!name||!teamId)return;
+      if([...(players||[]),...(cloudPlayers||[])].some(p=>p&&p.teamId===teamId&&String(p.name||'').toLowerCase()===name.toLowerCase())){showToast('That player is already on this team');return}
+      const code=makePlayerCode(name);nextPlayerCode++;
+      const created={teamId,name,role,code,icon:'monogram',profileStatus:'unclaimed',createdBy:displayName};
+      players.push(created);persistData();
+      if(typeof renderTeams==='function')renderTeams();if(typeof renderClubs==='function')renderClubs();if(typeof renderTournaments==='function')renderTournaments();
+      dialog.remove();if(parentDialog&&parentDialog.isConnected)parentDialog.remove();
+      showToast('Player created · '+code);afterCreate?.(created);
+    });
+    dialog.querySelector('#cpQuickPlayerName')?.focus();
   }
-
-  function showIncomingBatter(match, inn, dismissedCode){
-    if((Number(inn.wickets)||0)>=10) return;
-    const roster=uniqueRoster(inn.battingTeamId);
-    const eligible=roster.filter(p=>
-      p.code!==inn.strikerCode &&
-      p.code!==inn.nonStrikerCode &&
-      p.code!==dismissedCode &&
-      !inn.batters?.[p.code]?.out
-    );
-    showPlayerChoice(
-      'Choose the incoming batter',
-      'NEXT BATTER',
-      eligible,
-      [],
-      'No eligible batters are assigned to the batting team. Add players to the team before continuing.',
-      p=>{
-        if(inn.strikerCode===dismissedCode) inn.strikerCode=p.code;
-        else if(inn.nonStrikerCode===dismissedCode) inn.nonStrikerCode=p.code;
-        else inn.strikerCode=p.code;
-        innPlayerStats(inn,p.code,'batter');
-        persistData();
-        renderScoring(match);
-        renderRecent();
-        showToast(p.name+' comes in to bat');
-      }
-    );
+  function showPlayerChoice(title,eyebrow,list,excludedCodes,emptyText,teamId,onChoose){
+    const root=document.getElementById('scoreModalContent');if(!root)return;
+    root.querySelector('#cpWicketChoiceDialog')?.remove();
+    const available=list.filter(p=>p&&p.code&&!excludedCodes.includes(p.code));
+    const dialog=document.createElement('div');dialog.id='cpWicketChoiceDialog';dialog.className='cp-score-dialog-backdrop';
+    dialog.innerHTML='<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpWicketChoiceTitle"><div class="cp-score-dialog-head"><div><div class="eyebrow">'+esc(eyebrow)+'</div><h2 id="cpWicketChoiceTitle">'+esc(title)+'</h2></div></div>'+
+      (available.length?'<div class="cp-choice-player-list">'+available.map(p=>'<button type="button" class="secondary cp-choice-player" data-choice-code="'+esc(p.code)+'">'+identityMarkup(p)+'<span class="cp-choice-player-text"><strong>'+esc(p.name)+'</strong>'+(p.role?'<small>'+esc(p.role)+'</small>':'')+'</span></button>').join('')+'</div>':'<p class="notice">'+esc(emptyText)+'</p>')+
+      '<button type="button" class="secondary cp-quick-add-trigger" data-create-player>＋ Create a player for this team</button></section>';
+    root.appendChild(dialog);
+    dialog.querySelectorAll('[data-choice-code]').forEach(button=>button.addEventListener('click',()=>{const chosen=available.find(p=>p.code===button.dataset.choiceCode);if(!chosen)return;dialog.remove();onChoose(chosen)}));
+    dialog.querySelector('[data-create-player]').addEventListener('click',()=>createQuickPlayer(teamId,created=>{
+      const updated=uniqueRoster(teamId),found=updated.find(p=>p.code===created.code)||created;
+      if(title==='Choose the incoming batter')onChoose(found);
+      else if(title==='Choose the next over bowler')onChoose(found);
+      else showPlayerChoice(title,eyebrow,updated,excludedCodes,emptyText,teamId,onChoose);
+    },dialog));
   }
-
-  function showFielderChoice(match, action, dismissedCode){
+  function showIncomingBatter(match,inn,dismissedCode){
+    if((Number(inn.wickets)||0)>=10)return;
+    const teamId=inn.battingTeamId||(Number(inn.number)===1?match.teamAId:match.teamBId);
+    const roster=uniqueRoster(teamId);
+    const eligible=roster.filter(p=>p.code!==inn.strikerCode&&p.code!==inn.nonStrikerCode&&p.code!==dismissedCode&&!inn.batters?.[p.code]?.out);
+    showPlayerChoice('Choose the incoming batter','NEXT BATTER',eligible,[],'No eligible batters left on the team. Create a new player below to continue.',teamId,p=>{
+      if(inn.strikerCode===dismissedCode)inn.strikerCode=p.code;else if(inn.nonStrikerCode===dismissedCode)inn.nonStrikerCode=p.code;else inn.strikerCode=p.code;
+      innPlayerStats(inn,p.code,'batter');persistData();renderScoring(match);renderRecent();showToast(p.name+' comes in to bat');
+    });
+  }
+  function showFielderChoice(match,action){
     const inn=ensureInnings(match,Number(match.innings)||1);
-    const bowlingTeamId=inn.bowlingTeamId || (Number(inn.number)===1 ? match.teamBId : match.teamAId);
-    const roster=uniqueRoster(bowlingTeamId);
-    const kind=action.dismissal;
-    const isCatch=kind==='Caught';
-    const title=isCatch?'Who took the catch?':kind==='Stumped'?'Which wicketkeeper made the stumping?':'Which fielder effected the run-out?';
-    showPlayerChoice(
-      title,
-      kind.toUpperCase(),
-      roster,
-      [],
-      'No players are assigned to the fielding team yet. Add the fielding team players first.',
-      p=>recordPlayerDelivery(match,{...action,fielderCode:p.code,fielderName:p.name})
-    );
+    const teamId=inn.bowlingTeamId||(Number(inn.number)===1?match.teamBId:match.teamAId);
+    const roster=uniqueRoster(teamId),kind=action.dismissal;
+    const title=kind==='Caught'?'Who took the catch?':kind==='Stumped'?'Which wicketkeeper made the stumping?':'Which fielder effected the run-out?';
+    showPlayerChoice(title,kind.toUpperCase(),roster,[],'No players are assigned to the fielding team. Create one below.',teamId,p=>recordPlayerDelivery(match,{...action,fielderCode:p.code,fielderName:p.name}));
   }
-
-  recordPlayerDelivery=function(match, action){
-    if(action && action.type==='wicket' && action.dismissal){
+  recordPlayerDelivery=function(match,action){
+    if(action&&action.type==='wicket'&&action.dismissal){
       const needsFielder=['Caught','Run out','Stumped'].includes(action.dismissal);
-      if(needsFielder && !action.fielderCode){
-        showFielderChoice(match,action,ensureInnings(match,Number(match.innings)||1).strikerCode);
-        return;
-      }
-      const inn=ensureInnings(match,Number(match.innings)||1);
-      const dismissedCode=inn.strikerCode;
+      if(needsFielder&&!action.fielderCode){showFielderChoice(match,action);return}
+      const inn=ensureInnings(match,Number(match.innings)||1),dismissedCode=inn.strikerCode;
       recordBeforeWicketPopups(match,action);
-      const latest=inn.deliveries && inn.deliveries[inn.deliveries.length-1];
-      if(latest && latest.type==='wicket'){
-        if(action.fielderCode){
-          latest.fielderCode=action.fielderCode;
-          latest.fielderName=action.fielderName || playerForCode(action.fielderCode)?.name || action.fielderCode;
-          latest.note=(latest.dismissal || action.dismissal)+' · '+latest.fielderName;
-        }
-        persistData();
-        renderScoring(match);
-        renderRecent();
-        renderSearch(document.getElementById('matchSearch')?.value || '');
+      const latest=inn.deliveries&&inn.deliveries[inn.deliveries.length-1];
+      if(latest&&latest.type==='wicket'){
+        if(action.fielderCode){latest.fielderCode=action.fielderCode;latest.fielderName=action.fielderName||playerForCode(action.fielderCode)?.name||action.fielderCode;latest.note=(latest.dismissal||action.dismissal)+' · '+latest.fielderName}
+        persistData();renderScoring(match);renderRecent();renderSearch(document.getElementById('matchSearch')?.value||'');
         Promise.resolve().then(()=>showIncomingBatter(match,inn,dismissedCode));
       }
       return;
