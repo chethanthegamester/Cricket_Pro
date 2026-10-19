@@ -2002,10 +2002,10 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       '<div class="scoreboard-keypad">' +
       [1,2,3,4].map(n=>'<button type="button" class="secondary" data-final-legbye="'+n+'">'+n+' leg-bye'+(n===1?'':'s')+'</button>').join('') +
       '</div>';
-    // Keep the extras keypad near the top so it is not buried below batting tables.
-    const scoreHeader = root.querySelector('.result-card');
-    if (scoreHeader) scoreHeader.insertAdjacentElement('afterend', panel);
-    else root.prepend(panel);
+    // Put the extras keypad FIRST inside the scoring content, before the scorecard
+    // and batting tables, so it is immediately visible when the scoring modal opens.
+    panel.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;order:-1!important;width:100%;max-width:100%;box-sizing:border-box;margin:0 0 14px!important;z-index:20';
+    root.insertBefore(panel, root.firstElementChild);
     const getInn = () => {
       const inn = ensureInnings(match, Number(match.innings)||1);
       const striker = root.querySelector('#scoreStriker');
