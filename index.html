@@ -288,13 +288,6 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     originalRenderScoring(m);
 
     const root = document.getElementById("scoreModalContent");
-    // Remove the legacy batting figures panel from the old scoring layout.
-    root.querySelectorAll(".panel").forEach(panel => {
-      const heading = panel.querySelector(".panel-title h3");
-      if (heading && heading.textContent.trim().toLowerCase() === "batting figures") {
-        panel.remove();
-      }
-    });
     const oldWide = root.querySelector('[data-extra="wide"]');
     if (!oldWide) return;
 
@@ -933,20 +926,14 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
   };
 })();
 
-/* Final cleanup: remove any remaining legacy batting figures panel after every scoring renderer runs. */
-(function removeLegacyBattingFiguresPanel() {
+/* Remove only the unwanted advanced extras-and-dismissals panel after all scoring UI updates. */
+(function removeUnwantedAdvancedExtrasPanel() {
   const previousRenderScoring = renderScoring;
   renderScoring = function(match) {
     previousRenderScoring(match);
     const root = document.getElementById('scoreModalContent');
     if (!root) return;
-    root.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(heading => {
-      if (heading.textContent.trim().toLowerCase() === 'batting figures') {
-        const panel = heading.closest('.panel');
-        if (panel) panel.remove();
-        else heading.parentElement?.remove();
-      }
-    });
+    root.querySelector('#cpAdvancedScoring')?.remove();
   };
 })();
 </script></body></html>
