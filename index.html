@@ -59,6 +59,13 @@
 .cp-dismissal-note{margin:12px 0 0;font-size:11px}
 @media(max-width:440px){.cp-dismissed-options{grid-template-columns:1fr}}
 
+
+/* Account OTP form and match awards */
+#authOtp{letter-spacing:4px;font-size:20px;font-weight:800;max-width:260px}
+.cp-awards-card{margin:12px 0;padding:14px}
+.cp-awards-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:11px 0;border-top:1px solid var(--line);align-items:center}
+.cp-awards-row strong{text-align:right;color:var(--green);overflow-wrap:anywhere}
+
 </style><style id="cricket-pro-responsive-upgrades">
 /* Expanded Cricket Pro screens */
 #discoverResults .profile-card{min-width:0}#discoverResults .result-card{margin-top:0}#discoverResults .primary,#externalRecordsList button{white-space:nowrap}.record-meta{font-size:11px;color:var(--muted);margin-top:6px}.record-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.record-status{display:inline-block;border-radius:7px;padding:4px 8px;font-size:10px;font-weight:900;letter-spacing:.3px;background:#263241;color:#dbe7f4}.record-status.approved{background:#25321a;color:var(--green)}.record-status.pending{background:#332b19;color:#f3ce75}.record-status.rejected{background:#3b2227;color:#ff929b}.community-tag{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--green);font-weight:800}
@@ -164,7 +171,7 @@
 <div class="field"><label for="supabaseUrl">Supabase Project URL</label><input id="supabaseUrl" type="url" placeholder="https://your-project.supabase.co" autocomplete="url"></div>
 <div class="field"><label for="supabaseKey">Publishable / anon key</label><input id="supabaseKey" type="password" placeholder="sb_publishable_… or legacy anon key" autocomplete="off"></div>
 <div class="form-actions"><button class="secondary" id="saveCloudConfig">Save configuration</button><button class="primary" id="testCloudConnection">Test connection</button></div><p id="cloudHelp" class="notice">First create a Supabase project, then run the included cricket_pro_schema.sql in SQL Editor. Authentication will not work until the database schema is installed.</p>
-<div class="divider" style="height:1px;background:var(--line);margin:18px 0"></div><h3 style="margin:0 0 8px">Account</h3><p id="authStatus" style="color:var(--muted)">Not signed in.</p><div class="field"><label for="authEmail">Email address</label><input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email"></div><div class="field"><label for="authPassword">Password</label><input id="authPassword" type="password" placeholder="At least 8 characters" autocomplete="current-password"></div><div class="form-actions"><button class="primary" id="signUpBtn">Create account</button><button class="secondary" id="signInBtn">Sign in</button><button class="secondary" id="signOutBtn" disabled>Sign out</button></div><p class="notice">Email verification settings are controlled in your Supabase project. The website will show a confirmation message when sign-up requires email verification.</p></div>
+<div class="divider" style="height:1px;background:var(--line);margin:18px 0"></div><h3 style="margin:0 0 8px">Phone registration & sign-in</h3><p id="authStatus" style="color:var(--muted)">Not signed in.</p><div class="field"><label for="authUsername">Username</label><input id="authUsername" type="text" placeholder="Choose a username" autocomplete="username" maxlength="24"></div><div class="field"><label for="authPhone">Mobile number (include country code)</label><input id="authPhone" type="tel" placeholder="+91 98765 43210" autocomplete="tel" inputmode="tel"></div><div class="field" id="authOtpWrap" style="display:none"><label for="authOtp">SMS one-time code</label><input id="authOtp" type="text" placeholder="Enter 6-digit OTP" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></div><div class="form-actions"><button class="primary" id="signUpBtn">Send SMS OTP</button><button class="secondary" id="signInBtn" disabled>Verify OTP & sign in</button><button class="secondary" id="signOutBtn" disabled>Sign out</button></div><p class="notice">Enter your username and mobile number, request a one-time code, then enter the SMS code to register or sign in. No manual approval is required. SMS delivery must be enabled in Supabase.</p></div>
 <div class="panel" style="margin-top:16px"><div class="panel-title"><h2>Integration status</h2></div><div class="activity"><div class="activity-item"><div class="activity-icon">1</div><div><b>Authentication</b><small>Can be tested after project details are saved.</small></div></div><div class="activity-item"><div class="activity-icon">2</div><div><b>Shared teams, clubs and tournaments</b><small>Next integration stage after the database schema is installed.</small></div></div><div class="activity-item"><div class="activity-icon">3</div><div><b>Live score sync and device limits</b><small>Requires server-side policies and shared data integration; not enabled by this connection test alone.</small></div></div></div></div>
 <div class="panel" style="margin-top:16px"><div class="panel-title"><h2>External live-score provider</h2><span class="status upcoming">NOT CONNECTED</span></div><p class="notice" style="margin-top:0">The scorecard engine is ready to display player-by-player Cricket Pro scoring. Professional cricket feeds still need a provider account and a secure server-side proxy.</p><div class="activity"><div class="activity-item"><div class="activity-icon">1</div><div><b>Choose a provider</b><small>Pick a cricket data API with live fixtures, score updates and permitted display rights.</small></div></div><div class="activity-item"><div class="activity-icon">2</div><div><b>Connect through a backend</b><small>Keep API keys on the server or edge function. Never paste provider secrets into this HTML or browser storage.</small></div></div><div class="activity-item"><div class="activity-icon">3</div><div><b>Map the feed into Live Matches</b><small>Only verified provider responses will appear as external live scores; no demo scores are generated.</small></div></div></div></div>
 </section>
@@ -275,13 +282,107 @@ const CLOUD_CONFIG_KEY='cricketProSupabaseConfigV1';
 let supabaseClient=null, currentCloudUser=null;
 function cloudConfig(){try{return JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'{}')}catch(e){return {}}}
 function setCloudStatus(label,ok=false){const el=document.getElementById('cloudStatus');if(!el)return;el.textContent=label.toUpperCase();el.className='status '+(ok?'':'upcoming')}
+function cloudUserLabel(user){const meta=user?.user_metadata||{};return meta.username||meta.display_name||user?.phone||user?.email||'Cricket Pro user'}
 function setAuthStatus(text){const el=document.getElementById('authStatus');if(el)el.textContent=text;const out=document.getElementById('signOutBtn');if(out)out.disabled=!currentCloudUser}
 async function loadCloudMatches(){if(!supabaseClient)return;try{const {data,error}=await supabaseClient.from('community_items').select('id,owner_id,kind,name,data,created_at').eq('is_public',true).in('kind',['match','team','player']).limit(500);if(error)throw error;const rows=data||[];const unpack=row=>({...((row.data&&typeof row.data==='object')?row.data:{}),id:row.id,owner_id:row.owner_id,name:row.name,created_at:row.created_at});cloudMatches=rows.filter(r=>r.kind==='match').map(unpack);cloudTeams=rows.filter(r=>r.kind==='team').map(unpack);cloudPlayers=rows.filter(r=>r.kind==='player').map(unpack);renderMatchFeeds();if(document.getElementById('page-scorecards').classList.contains('active'))renderSearch(document.getElementById('matchSearch').value)}catch(e){console.warn('Public match list could not be loaded:',e.message)}}
 async function syncOwnedMatches(){if(!supabaseClient||!currentCloudUser)return;const owner_id=currentCloudUser.id;const stamp=new Date().toISOString();const payload=[...savedMatches.map(m=>({id:String(m.id),owner_id,kind:'match',name:`${m.a} vs ${m.b}`,is_public:true,data:{...m,owner_id,updatedAt:stamp}})),...teams.map(t=>({id:String(t.id),owner_id,kind:'team',name:t.name,is_public:true,data:{...t,owner_id,updatedAt:stamp}})),...players.map(p=>({id:String(p.code),owner_id,kind:'player',name:p.name,is_public:true,data:{...p,owner_id,updatedAt:stamp}}))];if(!payload.length)return;const {error}=await supabaseClient.from('community_items').upsert(payload,{onConflict:'id'});if(error)throw error;await loadCloudMatches()}
-function bootSupabase(){const c=cloudConfig();const u=document.getElementById('supabaseUrl'),k=document.getElementById('supabaseKey');if(u&&c.url)u.value=c.url;if(k&&c.key)k.value=c.key;if(c.url&&c.key&&window.supabase?.createClient){try{supabaseClient=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});setCloudStatus('Configured');supabaseClient.auth.getSession().then(async({data,error})=>{if(error)throw error;currentCloudUser=data.session?.user||null;setAuthStatus(currentCloudUser?`Signed in as ${currentCloudUser.email}`:'Not signed in.');if(currentCloudUser){setCloudStatus('Connected',true);await syncOwnedMatches().catch(e=>console.warn('Initial sync:',e.message))}else await loadCloudMatches();}).catch(e=>{setCloudStatus('Check configuration');setAuthStatus('Session could not be loaded: '+e.message)});supabaseClient.auth.onAuthStateChange((_event,session)=>{currentCloudUser=session?.user||null;if(currentCloudUser){setAuthStatus(`Signed in as ${currentCloudUser.email}`);loadCloudMatches().then(()=>syncOwnedMatches().catch(e=>console.warn(e.message)))}else{setAuthStatus('Not signed in.');loadCloudMatches()}})}catch(e){setCloudStatus('Configuration error');setAuthStatus(e.message)}}else{setCloudStatus('Not connected');setAuthStatus('Not signed in.')}}
+function bootSupabase(){const c=cloudConfig();const u=document.getElementById('supabaseUrl'),k=document.getElementById('supabaseKey');if(u&&c.url)u.value=c.url;if(k&&c.key)k.value=c.key;if(c.url&&c.key&&window.supabase?.createClient){try{supabaseClient=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});setCloudStatus('Configured');supabaseClient.auth.getSession().then(async({data,error})=>{if(error)throw error;currentCloudUser=data.session?.user||null;setAuthStatus(currentCloudUser?`Signed in as ${cloudUserLabel(currentCloudUser)}`:'Not signed in.');if(currentCloudUser){setCloudStatus('Connected',true);await syncOwnedMatches().catch(e=>console.warn('Initial sync:',e.message))}else await loadCloudMatches();}).catch(e=>{setCloudStatus('Check configuration');setAuthStatus('Session could not be loaded: '+e.message)});supabaseClient.auth.onAuthStateChange((_event,session)=>{currentCloudUser=session?.user||null;if(currentCloudUser){setAuthStatus(`Signed in as ${cloudUserLabel(currentCloudUser)}`);loadCloudMatches().then(()=>syncOwnedMatches().catch(e=>console.warn(e.message)))}else{setAuthStatus('Not signed in.');loadCloudMatches()}})}catch(e){setCloudStatus('Configuration error');setAuthStatus(e.message)}}else{setCloudStatus('Not connected');setAuthStatus('Not signed in.')}}
 function saveCloudConfig(){const url=document.getElementById('supabaseUrl').value.trim().replace(/\/$/,'');const key=document.getElementById('supabaseKey').value.trim();if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)){showToast('Enter a valid Supabase Project URL');return}if(!key){showToast('Enter the publishable / anon key');return}localStorage.setItem(CLOUD_CONFIG_KEY,JSON.stringify({url,key}));bootSupabase();showToast('Cloud configuration saved in this browser')}
-async function testCloud(){if(!supabaseClient){saveCloudConfig();if(!supabaseClient)return}setCloudStatus('Testing');try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;const {error:dbError}=await supabaseClient.from('community_items').select('id').limit(1);if(dbError)throw dbError;setCloudStatus('Connected',true);setAuthStatus(data.session?.user?`Signed in as ${data.session.user.email}`:'Backend reachable. Sign in to continue.');showToast('Supabase connection successful')}catch(e){setCloudStatus('Connection failed');document.getElementById('cloudHelp').textContent='Connection failed: '+e.message+' — confirm the project URL/key and run cricket_pro_schema.sql in Supabase SQL Editor.';showToast('Connection failed. Check setup details.')}}
-async function authAction(mode){if(!supabaseClient){showToast('Save your Supabase URL and key first');return}const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;if(!email||!password){showToast('Enter your email and password');return}if(password.length<8){showToast('Use a password of at least 8 characters');return}try{let result;if(mode==='signup')result=await supabaseClient.auth.signUp({email,password,options:{data:{display_name:displayName}}});else result=await supabaseClient.auth.signInWithPassword({email,password});if(result.error)throw result.error;currentCloudUser=result.data.user||result.data.session?.user||null;if(mode==='signup'&&!result.data.session){setAuthStatus('Account created. Check your email to verify the address, then sign in.');showToast('Check your email to verify your account')}else{setAuthStatus(currentCloudUser?`Signed in as ${currentCloudUser.email}`:'Check your email for next steps.');setCloudStatus('Connected',true);showToast(mode==='signup'?'Account created':'Signed in')} }catch(e){showToast(e.message||'Authentication failed');setAuthStatus('Authentication failed: '+(e.message||'Unknown error'))}}
+async function testCloud(){if(!supabaseClient){saveCloudConfig();if(!supabaseClient)return}setCloudStatus('Testing');try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;const {error:dbError}=await supabaseClient.from('community_items').select('id').limit(1);if(dbError)throw dbError;setCloudStatus('Connected',true);setAuthStatus(data.session?.user?`Signed in as ${cloudUserLabel(data.session.user)}`:'Backend reachable. Sign in to continue.');showToast('Supabase connection successful')}catch(e){setCloudStatus('Connection failed');document.getElementById('cloudHelp').textContent='Connection failed: '+e.message+' — confirm the project URL/key and run cricket_pro_schema.sql in Supabase SQL Editor.';showToast('Connection failed. Check setup details.')}}
+let cpPendingOtpPhone='', cpPendingOtpUsername='';
+async function authAction(mode){
+  if(!supabaseClient){showToast('Save your Supabase URL and publishable key first');setAuthStatus('Connect Supabase and enable Phone authentication with an SMS provider first.');return}
+  const username=(document.getElementById('authUsername')?.value||'').trim();
+  const phoneRaw=(document.getElementById('authPhone')?.value||'').trim();
+  const phone=phoneRaw.replace(/[\\s().-]/g,'');
+  const otp=(document.getElementById('authOtp')?.value||'').replace(/\\s/g,'');
+  const otpWrap=document.getElementById('authOtpWrap');
+  const sendBtn=document.getElementById('signUpBtn');
+  const verifyBtn=document.getElementById('signInBtn');
+
+  if(mode==='signup'){
+    if(!/^[A-Za-z0-9_.-]{3,24}$/.test(username)){
+      showToast('Username must be 3–24 characters: letters, numbers, dot, dash or underscore.');
+      setAuthStatus('Choose a username before requesting the SMS code.');
+      return;
+    }
+    if(!/^\\+[1-9]\\d{7,14}$/.test(phone)){
+      showToast('Enter the mobile number with country code, e.g. +91 9876543210.');
+      setAuthStatus('Include + and your country code in the mobile number.');
+      return;
+    }
+    try{
+      const {error}=await supabaseClient.auth.signInWithOtp({
+        phone,
+        options:{shouldCreateUser:true,data:{username,display_name:username}}
+      });
+      if(error)throw error;
+      cpPendingOtpPhone=phone;
+      cpPendingOtpUsername=username;
+      if(otpWrap)otpWrap.style.display='block';
+      if(verifyBtn)verifyBtn.disabled=false;
+      if(sendBtn)sendBtn.textContent='Resend SMS OTP';
+      const phoneField=document.getElementById('authPhone');
+      const usernameField=document.getElementById('authUsername');
+      if(phoneField)phoneField.value=phone;
+      setAuthStatus('SMS code sent to '+phone+'. Enter the code to finish registration or sign in.');
+      showToast('SMS OTP requested');
+    }catch(e){
+      setAuthStatus('Could not send SMS code: '+(e.message||'Unknown error'));
+      showToast(e.message||'Could not send SMS OTP');
+    }
+    return;
+  }
+
+  if(!cpPendingOtpPhone){
+    showToast('Request an SMS OTP first');
+    setAuthStatus('Enter your username and mobile number, then select Send SMS OTP.');
+    return;
+  }
+  if(!/^\\d{4,8}$/.test(otp)){
+    showToast('Enter the SMS code you received');
+    setAuthStatus('Enter the one-time code sent to '+cpPendingOtpPhone+'.');
+    return;
+  }
+  try{
+    const {data,error}=await supabaseClient.auth.verifyOtp({phone:cpPendingOtpPhone,token:otp,type:'sms'});
+    if(error)throw error;
+    currentCloudUser=data.user||data.session?.user||null;
+    if(!currentCloudUser)throw new Error('The OTP was accepted but no user session was returned.');
+
+    // Save the chosen username on the authenticated account profile.
+    if(cpPendingOtpUsername){
+      try{
+        const update=await supabaseClient.auth.updateUser({data:{username:cpPendingOtpUsername,display_name:cpPendingOtpUsername}});
+        if(!update.error&&update.data?.user)currentCloudUser=update.data.user;
+      }catch(e){console.warn('Username metadata could not be updated:',e.message)}
+    }
+    const finalName=cpPendingOtpUsername||currentCloudUser.user_metadata?.username||currentCloudUser.user_metadata?.display_name||currentCloudUser.phone||'Cricket Player';
+    displayName=finalName;
+    persistData();
+    const profileNameEl=document.getElementById('profileName');
+    const avatarEl=document.getElementById('avatar');
+    if(profileNameEl)profileNameEl.textContent=displayName;
+    if(avatarEl)avatarEl.textContent=displayName.split(/\\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
+    if(typeof refreshHomeGreeting==='function')refreshHomeGreeting();
+    if(typeof renderProfiles==='function')renderProfiles();
+    setAuthStatus('Signed in as '+finalName+' · '+(currentCloudUser.phone||cpPendingOtpPhone));
+    setCloudStatus('Connected',true);
+    showToast('Phone verified — signed in');
+    if(otpWrap)otpWrap.style.display='none';
+    if(document.getElementById('authOtp'))document.getElementById('authOtp').value='';
+    if(sendBtn)sendBtn.textContent='Send SMS OTP';
+    if(verifyBtn)verifyBtn.disabled=true;
+    if(document.getElementById('authPhone'))document.getElementById('authPhone').disabled=false;
+    if(document.getElementById('authUsername'))document.getElementById('authUsername').disabled=false;
+    cpPendingOtpPhone='';
+    cpPendingOtpUsername='';
+    await syncOwnedMatches().catch(e=>console.warn('Initial cloud sync pending:',e.message));
+  }catch(e){
+    setAuthStatus('OTP sign-in failed: '+(e.message||'Unknown error'));
+    showToast(e.message||'OTP verification failed');
+  }
+}
 async function signOutCloud(){if(!supabaseClient)return;try{const {error}=await supabaseClient.auth.signOut();if(error)throw error;currentCloudUser=null;setAuthStatus('Not signed in.');showToast('Signed out')}catch(e){showToast(e.message)}}
 
 
@@ -1157,3 +1258,173 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
   }
 })();
 </script></body></html>
+
+/* Cricket Pro phone OTP and match awards additions */
+(function installPhoneOtpAndMatchAwards() {
+  const authPhone = document.getElementById('authPhone');
+  const authOtp = document.getElementById('authOtp');
+  const authOtpWrap = document.getElementById('authOtpWrap');
+  if (authPhone) authPhone.addEventListener('input', () => {
+    const phone = authPhone.value.trim().replace(/[\\s().-]/g,'');
+    if (phone.startsWith('+')) authPhone.setCustomValidity('');
+    else authPhone.setCustomValidity('Include + and your country calling code.');
+  });
+  if (authOtp) authOtp.addEventListener('input', () => {
+    authOtp.value = authOtp.value.replace(/\\D/g,'').slice(0,8);
+  });
+
+  let activeAwardMatch = null;
+  const originalOpenScoring = openScoring;
+  openScoring = function(id) {
+    activeAwardMatch = savedMatches.find(m => String(m.id) === String(id)) || null;
+    return originalOpenScoring(id);
+  };
+
+  const scoreRoot = document.getElementById('scoreModalContent');
+  if (scoreRoot && !scoreRoot.dataset.cpAwardsBound) {
+    scoreRoot.dataset.cpAwardsBound = '1';
+    scoreRoot.addEventListener('click', event => {
+      const finish = event.target.closest('#finishMatch');
+      if (!finish) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      const match = activeAwardMatch || savedMatches.find(m => String(m.id) === String(document.getElementById('scoreModalTitle')?.textContent)) || null;
+      if (!match) {
+        showToast('Could not find this match to save awards.');
+        return;
+      }
+      showAwardsDialog(match);
+    }, true);
+  }
+
+  function getMatchPlayers(match) {
+    const all = [...players, ...cloudPlayers].filter(p => p && p.code);
+    const unique = new Map();
+    all.forEach(p => { if (!unique.has(p.code)) unique.set(p.code,p); });
+    return [...unique.values()].filter(p => p.teamId === match.teamAId || p.teamId === match.teamBId);
+  }
+  function optionMarkup(list, selected) {
+    return '<option value="">Not selected</option>' + list.map(p => {
+      const team = [...teams,...cloudTeams].find(t => t.id === p.teamId);
+      return '<option value="' + esc(p.code) + '"' + (p.code === selected ? ' selected' : '') + '>' +
+        esc(p.name) + (team ? ' · ' + esc(team.short || team.name) : '') + '</option>';
+    }).join('');
+  }
+  function showAwardsDialog(match) {
+    const root = document.getElementById('scoreModalContent');
+    if (!root) return;
+    root.querySelector('#cpAwardsDialog')?.remove();
+    const roster = getMatchPlayers(match);
+    const dialog = document.createElement('div');
+    dialog.id = 'cpAwardsDialog';
+    dialog.className = 'cp-score-dialog-backdrop';
+    dialog.innerHTML =
+      '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpAwardsTitle">' +
+        '<div class="cp-score-dialog-head"><div><div class="eyebrow">MATCH AWARDS</div><h2 id="cpAwardsTitle">Record match honours</h2></div>' +
+        '<button type="button" class="cp-dialog-close" data-awards-cancel aria-label="Close">×</button></div>' +
+        '<p class="notice">Choose the Man of the Match and MVP for this match. These awards are saved to its scorecard and statistics.</p>' +
+        (roster.length ? '<div class="field"><label for="cpManOfMatchSelect">Man of the Match</label><select id="cpManOfMatchSelect">' +
+          optionMarkup(roster,match.manOfTheMatchCode||'') + '</select></div><div class="field"><label for="cpMvpSelect">MVP</label><select id="cpMvpSelect">' +
+          optionMarkup(roster,match.mvpCode||'') + '</select></div>' :
+          '<p class="notice">No players are linked to these teams yet. You can finish without awards, or cancel and add players first.</p>') +
+        '<div class="form-actions" style="margin-top:16px">' +
+          '<button type="button" class="primary" data-awards-save>Save awards & finish</button>' +
+          '<button type="button" class="secondary" data-awards-skip>Finish without awards</button>' +
+        '</div></section>';
+    root.appendChild(dialog);
+    dialog.querySelector('[data-awards-cancel]').addEventListener('click', () => dialog.remove());
+    dialog.addEventListener('click', e => { if (e.target === dialog) dialog.remove(); });
+    const finish = (saveAwards) => {
+      if (saveAwards && roster.length) {
+        const manSelect = dialog.querySelector('#cpManOfMatchSelect');
+        const mvpSelect = dialog.querySelector('#cpMvpSelect');
+        match.manOfTheMatchCode = manSelect?.value || '';
+        match.mvpCode = mvpSelect?.value || '';
+        const mom = roster.find(p => p.code === match.manOfTheMatchCode);
+        const mvp = roster.find(p => p.code === match.mvpCode);
+        match.manOfTheMatchName = mom?.name || '';
+        match.mvpName = mvp?.name || '';
+      } else if (!saveAwards) {
+        match.manOfTheMatchCode = '';
+        match.mvpCode = '';
+        match.manOfTheMatchName = '';
+        match.mvpName = '';
+      }
+      match.status = 'COMPLETED';
+      match.updatedAt = new Date().toISOString();
+      persistData();
+      dialog.remove();
+      closeModals();
+      renderRecent();
+      renderSearch(document.getElementById('matchSearch')?.value || '');
+      renderStats();
+      showToast('Match finished. Awards saved to the scorecard.');
+    };
+    dialog.querySelector('[data-awards-save]').addEventListener('click', () => finish(true));
+    dialog.querySelector('[data-awards-skip]').addEventListener('click', () => finish(false));
+  }
+
+  const originalOpenPublicScorecard = openPublicScorecard;
+  openPublicScorecard = function(id) {
+    originalOpenPublicScorecard(id);
+    const match = allAvailableMatches().find(m => String(m.id) === String(id));
+    const root = document.getElementById('publicScorecardContent');
+    if (!match || !root) return;
+    root.querySelector('#cpPublicAwards')?.remove();
+    if (!match.manOfTheMatchCode && !match.mvpCode && !match.manOfTheMatchName && !match.mvpName) return;
+    const findName = (code, name) => name || [...players,...cloudPlayers].find(p=>p.code===code)?.name || code || 'Not selected';
+    const awards = document.createElement('section');
+    awards.id = 'cpPublicAwards';
+    awards.className = 'panel cp-awards-card';
+    awards.innerHTML = '<div class="panel-title"><h3 style="margin:0">Match honours</h3><span class="status">AWARDS</span></div>' +
+      '<div class="cp-awards-row"><span>Man of the Match</span><strong>' + esc(findName(match.manOfTheMatchCode,match.manOfTheMatchName)) + '</strong></div>' +
+      '<div class="cp-awards-row"><span>MVP</span><strong>' + esc(findName(match.mvpCode,match.mvpName)) + '</strong></div>';
+    const score = root.querySelector('.result-card');
+    if(score) score.insertAdjacentElement('afterend',awards);
+    else root.prepend(awards);
+  };
+
+  function renderAwardsTracking() {
+    const root = document.getElementById('statsDashboard');
+    if (!root) return;
+    root.querySelector('#cpAwardsTracking')?.remove();
+    const counts = new Map();
+    for (const match of allAvailableMatches()) {
+      for (const award of [
+        {code:match.manOfTheMatchCode,name:match.manOfTheMatchName,key:'mom'},
+        {code:match.mvpCode,name:match.mvpName,key:'mvp'}
+      ]) {
+        if (!award.code) continue;
+        const row = counts.get(award.code) || {code:award.code,name:award.name||playerForCode(award.code)?.name||award.code,mom:0,mvp:0};
+        row[award.key]++;
+        if (award.name) row.name=award.name;
+        counts.set(award.code,row);
+      }
+    }
+    const rows = [...counts.values()].sort((a,b)=>(b.mom+b.mvp)-(a.mom+a.mvp)||a.name.localeCompare(b.name));
+    const panel = document.createElement('section');
+    panel.id = 'cpAwardsTracking';
+    panel.className = 'panel';
+    panel.style.marginTop = '16px';
+    panel.innerHTML = '<div class="panel-title"><h2>MVP & Man of the Match tracking</h2><span class="status">AWARDS</span></div>' +
+      (rows.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Player</th><th>MVP</th><th>Man of the Match</th></tr></thead><tbody>' +
+        rows.map(row=>'<tr><td><b>'+esc(row.name)+'</b></td><td>'+row.mvp+'</td><td>'+row.mom+'</td></tr>').join('') +
+        '</tbody></table></div>' :
+        '<p class="notice">No awards recorded yet. Finish a match and select the players to start tracking awards here.</p>');
+    root.appendChild(panel);
+  }
+  const originalRenderStats = renderStats;
+  renderStats = function(){ originalRenderStats(); renderAwardsTracking(); };
+  renderStats();
+
+  // Add the account username to the signed-in app's display name when a session is restored.
+  const session = currentCloudUser;
+  if (session && session.user_metadata) {
+    const username = session.user_metadata.username || session.user_metadata.display_name;
+    if (username && displayName !== username) {
+      displayName = username;
+      persistData();
+    }
+  }
+})();
