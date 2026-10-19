@@ -1605,7 +1605,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     dialog.innerHTML=
       '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpNextOverBowlerTitle">'+
         '<div class="cp-score-dialog-head"><div><div class="eyebrow">OVER COMPLETE</div><h2 id="cpNextOverBowlerTitle">Choose the next over bowler</h2></div>'+
-        '<button type="button" class="cp-dialog-close" data-next-bowler-cancel aria-label="Close">×</button></div>'+
+        '</div>'+
         '<p class="notice">Choose from the full bowling team. '+esc(previousName)+' bowled the last over and cannot bowl consecutive overs.</p>'+
         '<div class="cp-bowler-grid">'+
           (roster.length?roster.map(p=>{
@@ -1615,14 +1615,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
           }).join(''):'<p class="notice">No players are assigned to the bowling team yet. Add players to that team first.</p>')+
         '</div></section>';
     root.appendChild(dialog);
-    dialog.querySelector('[data-next-bowler-cancel]').addEventListener('click',()=>{
-      dialog.remove();
-      showToast('Choose a next-over bowler before scoring the next delivery.');
-    });
-    dialog.addEventListener('click',e=>{if(e.target===dialog) {
-      dialog.remove();
-      showToast('Choose a next-over bowler before scoring the next delivery.');
-    }});
+    // Keep the picker open until a valid next bowler is selected.
     dialog.querySelectorAll('[data-next-bowler-code]').forEach(button=>button.addEventListener('click',()=>{
       const code=button.dataset.nextBowlerCode;
       if(!code || code===previousBowlerCode) return;
