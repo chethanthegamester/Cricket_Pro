@@ -2019,5 +2019,66 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
   };
 })();
 </script>
+
+<style id="cp-scoring-controls-final-visibility">
+/* Final visibility/stacking safeguard for scoring controls and in-app choice dialogs. */
+#scoreModalContent #cpFinalExtrasSelector,
+#scoreModalContent #cpFinalExtrasSelector .scoreboard-keypad {
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+#scoreModalContent #cpFinalExtrasSelector {
+  display: block !important;
+  position: relative !important;
+  z-index: 50 !important;
+  overflow: visible !important;
+}
+#scoreModalContent #cpFinalExtrasSelector .scoreboard-keypad {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+#scoreModalContent #cpFinalExtrasSelector .scoreboard-keypad button {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  min-height: 54px !important;
+  position: relative !important;
+  z-index: 51 !important;
+}
+.cp-score-dialog-backdrop,
+#cpWicketDialog,
+#cpWicketChoiceDialog,
+#cpQuickPlayerDialog,
+#cpBowlerDialog,
+#cpNextOverBowlerDialog {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 100000 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100dvh !important;
+  overflow: auto !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+.cp-score-dialog-backdrop .cp-score-dialog {
+  position: relative !important;
+  z-index: 100001 !important;
+  max-height: calc(100dvh - 28px) !important;
+  overflow-y: auto !important;
+  margin: auto !important;
+}
+@media(max-width:420px) {
+  #scoreModalContent #cpFinalExtrasSelector .scoreboard-keypad {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+</style>
+
 </body>
 </html>
