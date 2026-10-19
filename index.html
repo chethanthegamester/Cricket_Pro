@@ -1988,6 +1988,12 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       '</div><h4 style="margin-top:14px">No-ball (includes the automatic 1 run)</h4>' +
       '<div class="scoreboard-keypad">' +
       [0,1,2,3,4,5,6].map(n=>'<button type="button" class="secondary" data-final-nb="'+n+'">NB +'+n+'<small>'+(n+1)+' total run'+(n===0?'':'s')+'</small></button>').join('') +
+      '</div><h4 style="margin-top:14px">Byes</h4>' +
+      '<div class="scoreboard-keypad">' +
+      [1,2,3,4].map(n=>'<button type="button" class="secondary" data-final-bye="'+n+'">'+n+' bye'+(n===1?'':'s')+'</button>').join('') +
+      '</div><h4 style="margin-top:14px">Leg-byes</h4>' +
+      '<div class="scoreboard-keypad">' +
+      [1,2,3,4].map(n=>'<button type="button" class="secondary" data-final-legbye="'+n+'">'+n+' leg-bye'+(n===1?'':'s')+'</button>').join('') +
       '</div>';
     const existingExtras = root.querySelector('.scoreboard-extra-actions');
     if (existingExtras) existingExtras.insertAdjacentElement('afterend', panel);
@@ -2015,6 +2021,14 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       const batterRuns=Number(button.dataset.finalNb)||0;
       recordPlayerDelivery(match,{type:'noball',totalRuns:batterRuns+1,batterRuns,extras:1,bowlerRuns:batterRuns+1,legal:false,label:'NB+'+batterRuns});
     }));
+    ['bye','legbye'].forEach(type=>{
+      panel.querySelectorAll('[data-final-'+type+']').forEach(button=>button.addEventListener('click',()=>{
+        const inn=getInn();
+        if(!inn.strikerCode||!inn.nonStrikerCode||!inn.bowlerCode){showToast('Choose both batters and the bowler before scoring');return;}
+        const runs=Number(button.dataset['final'+(type==='bye'?'Bye':'Legbye')])||1;
+        recordPlayerDelivery(match,{type,extraRuns:runs,totalRuns:runs,extras:runs,bowlerRuns:0,legal:true,label:runs+' '+(type==='bye'?'BYE':'LEGBYE')});
+      }));
+    });
     return result;
   };
 })();
