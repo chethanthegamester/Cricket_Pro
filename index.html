@@ -1676,9 +1676,11 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
   }
 
   function showNextBowlerDialog(match, innings, previousBowlerCode){
+    // The scoring panel can be re-rendered immediately after a delivery. Mount the
+    // fixed-position dialog on body so a render cannot accidentally discard it.
     const root=document.getElementById('scoreModalContent');
-    if(!root) return;
-    root.querySelector('#cpNextOverBowlerDialog')?.remove();
+    if(!root || !document.body) return;
+    document.getElementById('cpNextOverBowlerDialog')?.remove();
     const roster=getBowlingRoster(match,innings);
     const teamId=innings.bowlingTeamId||(Number(innings.number)===1?match.teamBId:match.teamAId);
     const team=[...(teams||[]),...(cloudTeams||[])].find(t=>t&&t.id===teamId);
@@ -1700,7 +1702,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
               '<span class="cp-choice-avatar">'+badgeIcon(p.icon,p.name,initials(p.name))+'</span><span class="cp-choice-player-text"><strong>'+esc(p.name)+'</strong><small>'+(isPrevious?'Just bowled · choose someone else':esc(p.role||'Player'))+'</small></span></button>';
           }).join(''):'<p class="notice">No players are assigned to the bowling team yet. Add players to that team first.</p>')+
         '</div><button type="button" class="secondary cp-quick-add-trigger" data-create-next-bowler>＋ Create a player for this team</button></section>';
-    root.appendChild(dialog);
+    document.body.appendChild(dialog);
     dialog.querySelector('[data-create-next-bowler]')?.addEventListener('click',()=>{
       const teamId=innings.bowlingTeamId||(Number(innings.number)===1?match.teamBId:match.teamAId);
       root.querySelector('#cpQuickPlayerDialog')?.remove();
@@ -1739,8 +1741,12 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     const overBefore=Math.floor(ballsBefore/6);
     const overAfter=Math.floor(ballsAfter/6);
     if(ballsAfter>ballsBefore && overAfter>overBefore){
-      // Defer until the scoring render has completed; no prompt() browser dialog.
-      Promise.resolve().then(()=>showNextBowlerDialog(match,current,previousBowler));
+      // Wait until every scoring wrapper and render has completed. Use the body-mounted
+      // dialog so the next-over picker remains visible even if the score panel re-renders.
+      setTimeout(()=>{
+        if(match.status==='COMPLETED' || match._cpEndingDialogOpen) return;
+        showNextBowlerDialog(match,current,previousBowler);
+      }, 60);
     }
   };
 })();
