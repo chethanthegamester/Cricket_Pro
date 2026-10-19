@@ -918,18 +918,8 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     renderRecent();
     renderSearch(document.getElementById("matchSearch").value);
 
-    // Prompt for the next bowler after six legal balls.
-    if (legal && Math.floor((inn.balls || 0) / 6) > oldOver) {
-      const bowlingTeamId = inn.bowlingTeamId;
-      const roster = players.filter(p => p.teamId === bowlingTeamId);
-      const nextBowler = choosePlayer("Over complete — choose the next bowler",
-        roster, [bowlerCode]);
-      if (nextBowler) {
-        inn.bowlerCode = nextBowler;
-        persistData();
-        renderScoring(m);
-      }
-    }
+    // Next-over selection is handled by installAutomaticOverBowlerPicker below.
+    // Keep this older scoring wrapper free of a second, native prompt.
   };
 })();
 
