@@ -276,6 +276,27 @@
 
 
 </script>
+
+<style id="cp-next-over-dialog-visibility-fix">
+/* The next-over picker is mounted on <body>, so it must cover the viewport,
+   not use the old score-panel's absolute positioning. */
+#cpNextOverBowlerDialog {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100dvh !important;
+  overflow: auto !important;
+  border-radius: 0 !important;
+  background: rgba(5, 8, 13, 0.92) !important;
+}
+#cpNextOverBowlerDialog .cp-score-dialog {
+  max-height: calc(100dvh - 28px) !important;
+  overflow-y: auto !important;
+}
+</style>
+
 <script>
 function esc(value = '') {
   return String(value).replace(/[&<>"']/g, function (char) {
