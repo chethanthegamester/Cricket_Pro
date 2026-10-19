@@ -451,9 +451,8 @@ async function authAction(mode){
       setAuthStatus('Creating your account…');
       const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{username,display_name:username}}});
       if(error)throw error;
-      currentCloudUser=data.user||data.session?.user||null;
-      if(data.session&&currentCloudUser)await finishCloudSignIn(currentCloudUser,'Account created and signed in successfully.');
-      else{setAuthStatus('Account created. Check your email for a confirmation link, then return here and sign in.');showToast('Check your email to confirm your account');}
+      if(data.session&&data.user)await finishCloudSignIn(data.user,'Account created and signed in successfully.');
+      else{currentCloudUser=null;setAuthStatus('Account created. Check your email for a confirmation link, then return here and sign in.');showToast('Check your email to confirm your account');}
     }else if(mode==='login'){
       setAuthStatus('Signing in…');
       const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
@@ -1354,20 +1353,8 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
   }
 })();
 
-/* Cricket Pro phone OTP and match awards additions */
+/* Cricket Pro match awards additions */
 (function installPhoneOtpAndMatchAwards() {
-  const authPhone = document.getElementById('authPhone');
-  const authOtp = document.getElementById('authOtp');
-  const authOtpWrap = document.getElementById('authOtpWrap');
-  if (authPhone) authPhone.addEventListener('input', () => {
-    const phone = authPhone.value.trim().replace(/[\\s().-]/g,'');
-    if (phone.startsWith('+')) authPhone.setCustomValidity('');
-    else authPhone.setCustomValidity('Include + and your country calling code.');
-  });
-  if (authOtp) authOtp.addEventListener('input', () => {
-    authOtp.value = authOtp.value.replace(/\\D/g,'').slice(0,8);
-  });
-
   let activeAwardMatch = null;
   const originalOpenScoring = openScoring;
   openScoring = function(id) {
