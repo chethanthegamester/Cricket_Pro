@@ -1618,13 +1618,17 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     if(!root) return;
     root.querySelector('#cpNextOverBowlerDialog')?.remove();
     const roster=getBowlingRoster(match,innings);
+    const teamId=innings.bowlingTeamId||(Number(innings.number)===1?match.teamBId:match.teamAId);
+    const team=[...(teams||[]),...(cloudTeams||[])].find(t=>t&&t.id===teamId);
+    const teamUrl=team&&(team.logoUrl||team.logo_url)||'';
+    const teamBadge=team?'<div class="cp-choice-team-label"><span class="cp-choice-avatar cp-team-avatar">'+(teamUrl?'<img src="'+esc(teamUrl)+'" alt="" loading="lazy" onerror="this.remove()">':badgeIcon(team.icon||'crest',team.name,team.short||initials(team.name)))+'</span><span>'+esc(team.name)+'</span></div>':'';
     const previousName=playerForCode(previousBowlerCode)?.name || 'previous bowler';
     const dialog=document.createElement('div');
     dialog.id='cpNextOverBowlerDialog';
     dialog.className='cp-score-dialog-backdrop';
     dialog.innerHTML=
       '<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpNextOverBowlerTitle">'+
-        '<div class="cp-score-dialog-head"><div><div class="eyebrow">OVER COMPLETE</div><h2 id="cpNextOverBowlerTitle">Choose the next over bowler</h2></div>'+
+        '<div class="cp-score-dialog-head"><div><div class="eyebrow">OVER COMPLETE</div><h2 id="cpNextOverBowlerTitle">Choose the next over bowler</h2>'+teamBadge+'</div>'+
         '</div>'+
         '<p class="notice">Choose from the full bowling team. '+esc(previousName)+' bowled the last over and cannot bowl consecutive overs.</p>'+
         '<div class="cp-bowler-grid">'+
