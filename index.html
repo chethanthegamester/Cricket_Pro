@@ -428,8 +428,8 @@ let cpPendingOtpPhone='', cpPendingOtpUsername='';
 async function authAction(mode){
   if(!supabaseClient){showToast('Supabase is not connected');setAuthStatus('Supabase connection is missing. Open Settings to check the project connection.');return}
   const username=(document.getElementById('authUsername')?.value||'').trim();
-  const phone=(document.getElementById('authPhone')?.value||'').trim().replace(/[\\s().-]/g,'');
-  const otp=(document.getElementById('authOtp')?.value||'').trim().replace(/\\s/g,'');
+  const phone=(document.getElementById('authPhone')?.value||'').trim().replace(/[\s().-]/g,'');
+  const otp=(document.getElementById('authOtp')?.value||'').trim().replace(/\s/g,'');
   const otpWrap=document.getElementById('authOtpWrap');
   const createBtn=document.getElementById('signUpBtn');
   const loginBtn=document.getElementById('signInBtn');
@@ -442,7 +442,7 @@ async function authAction(mode){
       document.getElementById('authUsername')?.focus();
       return;
     }
-    if(!/^\\+[1-9]\\d{7,14}$/.test(phone)){
+    if(!/^\+[1-9]\d{7,14}$/.test(phone)){
       showToast('Enter your phone number with country code, e.g. +91 9876543210.');
       setAuthStatus('Include + and the country code in your mobile number.');
       document.getElementById('authPhone')?.focus();
@@ -483,7 +483,7 @@ async function authAction(mode){
     setAuthStatus('Choose Create account or Sign in to request your SMS code.');
     return;
   }
-  if(!/^\\d{4,8}$/.test(otp)){
+  if(!/^\d{4,8}$/.test(otp)){
     showToast('Enter the SMS code you received');
     setAuthStatus('Enter the verification code sent to '+cpPendingOtpPhone+'.');
     document.getElementById('authOtp')?.focus();
@@ -506,7 +506,7 @@ async function authAction(mode){
     const profileNameEl=document.getElementById('profileName');
     const avatarEl=document.getElementById('avatar');
     if(profileNameEl)profileNameEl.textContent=displayName;
-    if(avatarEl)avatarEl.textContent=displayName.split(/\\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
+    if(avatarEl)avatarEl.textContent=displayName.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
     if(typeof refreshHomeGreeting==='function')refreshHomeGreeting();
     if(typeof renderProfiles==='function')renderProfiles();
     setAuthStatus('You’re signed in as '+finalName+'. Your phone has been verified.');
