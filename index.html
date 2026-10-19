@@ -66,6 +66,45 @@
 .cp-awards-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:11px 0;border-top:1px solid var(--line);align-items:center}
 .cp-awards-row strong{text-align:right;color:var(--green);overflow-wrap:anywhere}
 
+
+/* Polished Cricket Pro phone sign-in */
+.account-page{padding:0!important;background:transparent!important;border:0!important}
+.auth-shell{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(330px,.95fr);min-height:610px;border:1px solid #2b3948;border-radius:22px;overflow:hidden;background:#101720;box-shadow:0 22px 70px #0004}
+.auth-visual{position:relative;isolation:isolate;overflow:hidden;padding:clamp(24px,4vw,48px);display:flex;flex-direction:column;justify-content:space-between;min-height:610px;background:linear-gradient(145deg,#0d1717dd,#10172088),url('https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=1400&q=85') center/cover}
+.auth-visual:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#09110b55 0%,#09110bcc 100%)}
+.auth-brand{display:flex;align-items:center;gap:10px;font-weight:950;letter-spacing:.8px;font-size:15px}
+.auth-brandmark{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--green);color:#11170b;font-size:22px;font-weight:950;box-shadow:0 8px 30px #b8f34a30}
+.auth-brand em{font-style:normal;color:var(--green)}
+.auth-headline{max-width:510px}
+.auth-kicker{color:var(--green);font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase}
+.auth-headline h2{font-size:clamp(34px,4vw,56px);line-height:1.02;letter-spacing:-2px;margin:12px 0 16px;max-width:500px}
+.auth-headline p{max-width:420px;color:#d4dfd5;font-size:14px;line-height:1.7}
+.auth-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+.auth-pills span{padding:8px 11px;border:1px solid #ffffff32;background:#0a120b88;border-radius:999px;font-size:11px;font-weight:800;color:#f0f6ee;backdrop-filter:blur(8px)}
+.auth-visual-foot{display:flex;align-items:center;gap:12px;color:#d2decf;font-size:11px}
+.auth-visual-foot .line{height:1px;width:42px;background:var(--green)}
+.auth-form-wrap{padding:clamp(22px,4vw,46px);display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 100% 0%,#25321d 0,transparent 45%),#111821}
+.auth-form{width:100%;max-width:390px}
+.auth-form h2{font-size:30px;letter-spacing:-1px;margin:0 0 7px}
+.auth-subtitle{color:var(--muted);font-size:13px;margin:0 0 24px}
+.auth-form .field{margin:15px 0}
+.auth-form .field input{min-height:48px;background:#0b1118;border-color:#344252}
+.auth-form .field input:focus{box-shadow:0 0 0 3px #b8f34a18}
+.auth-form .form-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}
+.auth-form .form-actions button{min-height:45px;padding:10px}
+.auth-form .auth-verify-row{display:grid;grid-template-columns:1fr;gap:9px;margin-top:9px}
+.auth-form .auth-verify-row button{min-height:47px}
+.auth-status{border:1px solid #334151;background:#0b1118;border-radius:10px;padding:11px 12px;font-size:12px;line-height:1.5;margin:15px 0;color:#c5d2df}
+.auth-status:before{content:"●";color:var(--green);margin-right:8px}
+.auth-privacy{display:flex;align-items:flex-start;gap:8px;color:#8190a2;font-size:11px;line-height:1.6;margin-top:18px}
+.auth-privacy span{color:var(--green)}
+.auth-divider{display:flex;align-items:center;gap:10px;color:#6e7c8d;font-size:10px;font-weight:850;letter-spacing:1.4px;margin:20px 0}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#2b3745;flex:1}
+.auth-signed-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #293543}
+.auth-signed-row small{color:var(--muted)}
+@media(max-width:850px){.auth-shell{grid-template-columns:1fr}.auth-visual{min-height:300px;padding:24px}.auth-headline h2{font-size:38px}.auth-visual-foot{margin-top:30px}.auth-form-wrap{padding:28px 22px}}
+@media(max-width:480px){.auth-shell{border-radius:15px}.auth-visual{min-height:280px}.auth-headline h2{font-size:34px}.auth-form h2{font-size:27px}.auth-form .form-actions{grid-template-columns:1fr}.auth-form-wrap{padding:22px 16px}}
+
 </style><style id="cricket-pro-responsive-upgrades">
 /* Expanded Cricket Pro screens */
 #discoverResults .profile-card{min-width:0}#discoverResults .result-card{margin-top:0}#discoverResults .primary,#externalRecordsList button{white-space:nowrap}.record-meta{font-size:11px;color:var(--muted);margin-top:6px}.record-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.record-status{display:inline-block;border-radius:7px;padding:4px 8px;font-size:10px;font-weight:900;letter-spacing:.3px;background:#263241;color:#dbe7f4}.record-status.approved{background:#25321a;color:var(--green)}.record-status.pending{background:#332b19;color:#f3ce75}.record-status.rejected{background:#3b2227;color:#ff929b}.community-tag{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--green);font-weight:800}
@@ -115,7 +154,7 @@
 </style>
 </head>
 <body><div class="app">
-<aside class="sidebar"><div class="brand"><div class="brandmark">C</div><span>CRICKET <em>PRO</em></span></div><div class="navlabel">WORKSPACE</div><nav class="nav" id="nav"><button class="active" data-page="home"><span class="ico">⌂</span><span class="navtext">Home</span></button><button data-page="discover"><span class="ico">⌕</span><span class="navtext">Discover</span></button><button data-page="live"><span class="ico">◉</span><span class="navtext">Live Matches</span></button><button data-page="teams"><span class="ico">♟</span><span class="navtext">Teams & Players</span></button><button data-page="clubs"><span class="ico">♧</span><span class="navtext">Clubs</span></button><button data-page="tournaments"><span class="ico">♜</span><span class="navtext">Tournaments</span></button><button data-page="scorecards"><span class="ico">▤</span><span class="navtext">Scorecards</span></button><button data-page="stats"><span class="ico">▥</span><span class="navtext">Statistics</span></button><button data-page="profiles"><span class="ico">◉</span><span class="navtext">Profiles</span></button><button data-page="settings"><span class="ico">⚙</span><span class="navtext">Settings</span></button></nav><div class="sidebar-bottom"><div class="profile"><div class="avatar" id="avatar">CP</div><div class="profile-info"><b id="profileName">Cricket Player</b><small>Player profile</small></div><span class="more">···</span></div></div></aside>
+<aside class="sidebar"><div class="brand"><div class="brandmark">C</div><span>CRICKET <em>PRO</em></span></div><div class="navlabel">WORKSPACE</div><nav class="nav" id="nav"><button class="active" data-page="home"><span class="ico">⌂</span><span class="navtext">Home</span></button><button data-page="discover"><span class="ico">⌕</span><span class="navtext">Discover</span></button><button data-page="live"><span class="ico">◉</span><span class="navtext">Live Matches</span></button><button data-page="teams"><span class="ico">♟</span><span class="navtext">Teams & Players</span></button><button data-page="clubs"><span class="ico">♧</span><span class="navtext">Clubs</span></button><button data-page="tournaments"><span class="ico">♜</span><span class="navtext">Tournaments</span></button><button data-page="scorecards"><span class="ico">▤</span><span class="navtext">Scorecards</span></button><button data-page="stats"><span class="ico">▥</span><span class="navtext">Statistics</span></button><button data-page="profiles"><span class="ico">◉</span><span class="navtext">Profiles</span></button><button data-page="account"><span class="ico">↗</span><span class="navtext">Sign In</span></button><button data-page="settings"><span class="ico">⚙</span><span class="navtext">Settings</span></button></nav><div class="sidebar-bottom"><div class="profile"><div class="avatar" id="avatar">CP</div><div class="profile-info"><b id="profileName">Cricket Player</b><small>Player profile</small></div><span class="more">···</span></div></div></aside>
 <main class="main"><header class="topbar"><div><div class="eyebrow" id="greeting">YOUR CRICKET HUB</div><h1 id="pageTitle">Good morning, Cricket Player 👋</h1></div><div class="top-actions"><button class="secondary" id="profileEdit">◉ Edit profile</button><button class="primary" id="topCreate">＋ Create match</button></div></header>
 <section class="page-view active" id="page-home">
 <div id="homeLiveFeed"></div>
@@ -165,13 +204,44 @@
 <div class="profile-grid" style="margin-bottom:16px"><div class="panel"><div class="eyebrow">MONTHLY</div><div style="font-size:36px;font-weight:900;margin:8px 0">₹49 <span style="font-size:13px;color:var(--muted);font-weight:600">/ month</span></div><p class="match-sub">Flexible monthly access</p><button class="primary" data-plan="monthly">Choose monthly</button></div><div class="panel" style="border-color:#65552f"><div style="display:flex;justify-content:space-between;align-items:center"><div class="eyebrow" style="color:#f0ca69">YEARLY</div><span class="status" style="background:#3b2f17;color:#f0ca69">BEST VALUE</span></div><div style="font-size:36px;font-weight:900;margin:8px 0">₹399 <span style="font-size:13px;color:var(--muted);font-weight:600">/ year</span></div><p class="match-sub">About ₹33.25 per month · save ₹189 vs monthly</p><button class="primary" data-plan="yearly">Choose yearly</button></div></div>
 <div class="bottom-grid"><div class="panel"><div class="panel-title"><h2>What's included</h2></div><div class="activity"><div class="activity-item"><div class="activity-icon">✓</div><div><b>Up to 5 registered devices</b><small>Phone, tablet and computer using the same account.</small></div></div><div class="activity-item"><div class="activity-icon">↻</div><div><b>Cloud sync</b><small>Same player ID, teams, clubs, matches and statistics everywhere.</small></div></div><div class="activity-item"><div class="activity-icon">▦</div><div><b>Responsive orientation</b><small>Portrait and landscape layouts on supported devices.</small></div></div></div></div><div class="panel"><div class="panel-title"><h2>Device manager preview</h2><span id="deviceCounter" class="status upcoming">1 / 1</span></div><p class="match-sub" id="devicePlanText">Free preview: 1 registered device. Select a plan to preview 5-device access.</p><div id="deviceList"></div><button class="secondary" id="addDeviceBtn" style="margin-top:12px">＋ Register this device (demo)</button><p class="notice">Device registration is simulated locally. A server must enforce device limits securely in the real app.</p></div></div>
 </section>
+
+<section class="page-view" id="page-account">
+<div class="section-heading"><div><h2>Your cricket community starts here</h2><p>Secure sign-in with your mobile number and an SMS code.</p></div><span class="status upcoming">PHONE OTP</span></div>
+<div class="auth-shell">
+  <div class="auth-visual">
+    <div class="auth-brand"><span class="auth-brandmark">C</span><span>CRICKET <em>PRO</em></span></div>
+    <div class="auth-headline">
+      <div class="auth-kicker">One app. Every innings.</div>
+      <h2>Play together.<br>Track every moment.</h2>
+      <p>Your space for teams, clubs, scorecards and cricket stories. Sign in to keep your cricket world connected.</p>
+      <div class="auth-pills"><span>🏏 Live scoring</span><span>🛡 Team profiles</span><span>📊 Player stats</span></div>
+    </div>
+    <div class="auth-visual-foot"><span class="line"></span><span>MADE FOR THE CRICKET COMMUNITY</span></div>
+  </div>
+  <div class="auth-form-wrap"><div class="auth-form">
+    <div class="eyebrow">WELCOME TO CRICKET PRO</div>
+    <h2>Sign in or join</h2>
+    <p class="auth-subtitle">Use your phone number. We’ll text you a one-time verification code.</p>
+    <p id="authStatus" class="auth-status" role="status" aria-live="polite">Checking your connection…</p>
+    <div class="field"><label for="authUsername">Username <span style="font-weight:500;color:var(--muted)">(new accounts)</span></label><input id="authUsername" type="text" placeholder="Choose a username" autocomplete="username" maxlength="24"></div>
+    <div class="field"><label for="authPhone">Mobile number</label><input id="authPhone" type="tel" placeholder="+91 98765 43210" autocomplete="tel" inputmode="tel"></div>
+    <div class="field" id="authOtpWrap" style="display:none"><label for="authOtp">SMS verification code</label><input id="authOtp" type="text" placeholder="Enter the code from SMS" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></div>
+    <div class="form-actions"><button class="primary" id="signUpBtn">Create account</button><button class="secondary" id="signInBtn">Sign in</button></div>
+    <div class="auth-verify-row"><button class="primary" id="authVerifyBtn" disabled>Verify code & continue</button></div>
+    <div class="auth-signed-row"><div><b id="signedInName">Not signed in</b><br><small>Account status</small></div><button class="secondary" id="signOutBtn" disabled>Sign out</button></div>
+    <div class="auth-divider">YOUR CRICKET. YOUR COMMUNITY.</div>
+    <div class="auth-privacy"><span>●</span><div>Your phone number is used to verify your account. Never share your SMS code with anyone.</div></div>
+  </div></div>
+</div>
+</section>
+
 <section class="page-view" id="page-settings">
 <div class="panel page-placeholder"><h2>Settings</h2><p style="color:var(--muted)">Personalise your Cricket Pro workspace.</p><div class="field"><label for="settingName">Display name</label><input id="settingName" placeholder="Enter your name"></div><button class="primary" id="saveName">Save profile</button></div>
 <div class="panel" style="margin-top:16px"><div class="panel-title"><h2>Cloud backend</h2><span id="cloudStatus" class="status upcoming">NOT CONNECTED</span></div><p style="color:var(--muted)">Connect a Supabase project to begin using secure accounts. These details are stored in this browser for this prototype. Use only your Project URL and publishable/anon key here—never a service-role or secret key.</p>
 <div class="field"><label for="supabaseUrl">Supabase Project URL</label><input id="supabaseUrl" type="url" placeholder="https://your-project.supabase.co" autocomplete="url"></div>
 <div class="field"><label for="supabaseKey">Publishable / anon key</label><input id="supabaseKey" type="password" placeholder="sb_publishable_… or legacy anon key" autocomplete="off"></div>
 <div class="form-actions"><button class="secondary" id="saveCloudConfig">Save configuration</button><button class="primary" id="testCloudConnection">Test connection</button></div><p id="cloudHelp" class="notice">First create a Supabase project, then run the included cricket_pro_schema.sql in SQL Editor. Authentication will not work until the database schema is installed.</p>
-<div class="divider" style="height:1px;background:var(--line);margin:18px 0"></div><h3 style="margin:0 0 8px">Phone registration & sign-in</h3><p id="authStatus" style="color:var(--muted)">Not signed in.</p><div class="field"><label for="authUsername">Username</label><input id="authUsername" type="text" placeholder="Choose a username" autocomplete="username" maxlength="24"></div><div class="field"><label for="authPhone">Mobile number (include country code)</label><input id="authPhone" type="tel" placeholder="+91 98765 43210" autocomplete="tel" inputmode="tel"></div><div class="field" id="authOtpWrap" style="display:none"><label for="authOtp">SMS one-time code</label><input id="authOtp" type="text" placeholder="Enter 6-digit OTP" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></div><div class="form-actions"><button class="primary" id="signUpBtn">Send SMS OTP</button><button class="secondary" id="signInBtn" disabled>Verify OTP & sign in</button><button class="secondary" id="signOutBtn" disabled>Sign out</button></div><p class="notice">Enter your username and mobile number, request a one-time code, then enter the SMS code to register or sign in. No manual approval is required. SMS delivery must be enabled in Supabase.</p></div>
+<div class="divider" style="height:1px;background:var(--line);margin:18px 0"></div><div class="activity-item"><div class="activity-icon">↗</div><div><b>Phone sign-in</b><small>Use the dedicated Sign In page to create an account or verify your mobile number by SMS.</small></div></div></div>
 <div class="panel" style="margin-top:16px"><div class="panel-title"><h2>Integration status</h2></div><div class="activity"><div class="activity-item"><div class="activity-icon">1</div><div><b>Authentication</b><small>Can be tested after project details are saved.</small></div></div><div class="activity-item"><div class="activity-icon">2</div><div><b>Shared teams, clubs and tournaments</b><small>Next integration stage after the database schema is installed.</small></div></div><div class="activity-item"><div class="activity-icon">3</div><div><b>Live score sync and device limits</b><small>Requires server-side policies and shared data integration; not enabled by this connection test alone.</small></div></div></div></div>
 <div class="panel" style="margin-top:16px"><div class="panel-title"><h2>External live-score provider</h2><span class="status upcoming">NOT CONNECTED</span></div><p class="notice" style="margin-top:0">The scorecard engine is ready to display player-by-player Cricket Pro scoring. Professional cricket feeds still need a provider account and a secure server-side proxy.</p><div class="activity"><div class="activity-item"><div class="activity-icon">1</div><div><b>Choose a provider</b><small>Pick a cricket data API with live fixtures, score updates and permitted display rights.</small></div></div><div class="activity-item"><div class="activity-icon">2</div><div><b>Connect through a backend</b><small>Keep API keys on the server or edge function. Never paste provider secrets into this HTML or browser storage.</small></div></div><div class="activity-item"><div class="activity-icon">3</div><div><b>Map the feed into Live Matches</b><small>Only verified provider responses will appear as external live scores; no demo scores are generated.</small></div></div></div></div>
 </section>
@@ -195,7 +265,7 @@ function esc(value = '') {
     }[char];
   });
 }
- const pages={home:'Good morning',discover:'Discover Cricket',live:'Live Matches',teams:'Teams & Players',clubs:'Clubs',tournaments:'Tournaments',scorecards:'Scorecards',records:'External Records',stats:'Statistics',profiles:'Profiles',pro:'Cricket Pro Plan',settings:'Settings'};
+ const pages={home:'Good morning',discover:'Discover Cricket',live:'Live Matches',teams:'Teams & Players',clubs:'Clubs',tournaments:'Tournaments',scorecards:'Scorecards',records:'External Records',stats:'Statistics',profiles:'Profiles',account:'Sign In',pro:'Cricket Pro Plan',settings:'Settings'};
 const STORAGE_KEY='cricketProDataV1';
 let savedMatches=[], cloudMatches=[], cloudTeams=[], cloudPlayers=[], teams=[], players=[], clubs=[], tournaments=[], clubPlayerLinks=[], displayName='Cricket Player', nextPlayerCode=1, profileDetails={city:'',role:'Player',bio:''};
 try { const stored=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(stored){savedMatches=Array.isArray(stored.savedMatches)?stored.savedMatches:[];teams=Array.isArray(stored.teams)?stored.teams:[];players=Array.isArray(stored.players)?stored.players:[];clubs=Array.isArray(stored.clubs)?stored.clubs:[];tournaments=Array.isArray(stored.tournaments)?stored.tournaments:[];clubPlayerLinks=Array.isArray(stored.clubPlayerLinks)?stored.clubPlayerLinks:[];displayName=stored.displayName||displayName;profileDetails=stored.profileDetails||profileDetails;nextPlayerCode=Number(stored.nextPlayerCode)||Math.max(1,...players.map(p=>Number(String(p.code||'').replace('CP-',''))+1).filter(Number.isFinite));} } catch(err) { console.warn('Could not load saved Cricket Pro data',err); }
@@ -280,10 +350,11 @@ document.querySelectorAll('[data-plan]').forEach(b=>b.addEventListener('click',(
 // Supabase connection and authentication bootstrap. Cloud sync of cricket records is a later migration stage.
 const CLOUD_CONFIG_KEY='cricketProSupabaseConfigV1';
 let supabaseClient=null, currentCloudUser=null;
-function cloudConfig(){try{return JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'{}')}catch(e){return {}}}
+const DEFAULT_CLOUD_CONFIG={url:'https://qujsovdzbfhtjeazfrav.supabase.co',key:'sb_publishable_QlAKeGwYV8GX40HjYDjoLg_VayYFGNB'};
+function cloudConfig(){try{const saved=JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)||'null');return saved?.url&&saved?.key?saved:DEFAULT_CLOUD_CONFIG}catch(e){return DEFAULT_CLOUD_CONFIG}}
 function setCloudStatus(label,ok=false){const el=document.getElementById('cloudStatus');if(!el)return;el.textContent=label.toUpperCase();el.className='status '+(ok?'':'upcoming')}
 function cloudUserLabel(user){const meta=user?.user_metadata||{};return meta.username||meta.display_name||user?.phone||user?.email||'Cricket Pro user'}
-function setAuthStatus(text){const el=document.getElementById('authStatus');if(el)el.textContent=text;const out=document.getElementById('signOutBtn');if(out)out.disabled=!currentCloudUser}
+function setAuthStatus(text){const el=document.getElementById('authStatus');if(el)el.textContent=text;const out=document.getElementById('signOutBtn');if(out)out.disabled=!currentCloudUser;const signed=document.getElementById('signedInName');if(signed)signed.textContent=currentCloudUser?cloudUserLabel(currentCloudUser):'Not signed in';const verify=document.getElementById('authVerifyBtn');if(verify&& !cpPendingOtpPhone)verify.disabled=true}
 async function loadCloudMatches(){
   if(!supabaseClient)return;
   try{
@@ -355,71 +426,79 @@ function saveCloudConfig(){const url=document.getElementById('supabaseUrl').valu
 async function testCloud(){if(!supabaseClient){saveCloudConfig();if(!supabaseClient)return}setCloudStatus('Testing');try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;const {error:dbError}=await supabaseClient.from('community_items').select('id').limit(1);if(dbError)throw dbError;setCloudStatus('Connected',true);setAuthStatus(data.session?.user?`Signed in as ${cloudUserLabel(data.session.user)}`:'Backend reachable. Sign in to continue.');showToast('Supabase connection successful')}catch(e){setCloudStatus('Connection failed');document.getElementById('cloudHelp').textContent='Connection failed: '+e.message+' — confirm the project URL/key and run cricket_pro_schema.sql in Supabase SQL Editor.';showToast('Connection failed. Check setup details.')}}
 let cpPendingOtpPhone='', cpPendingOtpUsername='';
 async function authAction(mode){
-  if(!supabaseClient){showToast('Save your Supabase URL and publishable key first');setAuthStatus('Connect Supabase and enable Phone authentication with an SMS provider first.');return}
+  if(!supabaseClient){showToast('Supabase is not connected');setAuthStatus('Supabase connection is missing. Open Settings to check the project connection.');return}
   const username=(document.getElementById('authUsername')?.value||'').trim();
-  const phoneRaw=(document.getElementById('authPhone')?.value||'').trim();
-  const phone=phoneRaw.replace(/[\\s().-]/g,'');
-  const otp=(document.getElementById('authOtp')?.value||'').replace(/\\s/g,'');
+  const phone=(document.getElementById('authPhone')?.value||'').trim().replace(/[\\s().-]/g,'');
+  const otp=(document.getElementById('authOtp')?.value||'').trim().replace(/\\s/g,'');
   const otpWrap=document.getElementById('authOtpWrap');
-  const sendBtn=document.getElementById('signUpBtn');
-  const verifyBtn=document.getElementById('signInBtn');
+  const createBtn=document.getElementById('signUpBtn');
+  const loginBtn=document.getElementById('signInBtn');
+  const verifyBtn=document.getElementById('authVerifyBtn');
 
-  if(mode==='signup'){
-    if(!/^[A-Za-z0-9_.-]{3,24}$/.test(username)){
-      showToast('Username must be 3–24 characters: letters, numbers, dot, dash or underscore.');
-      setAuthStatus('Choose a username before requesting the SMS code.');
+  if(mode==='signup'||mode==='login'){
+    if(mode==='signup'&&!/^[A-Za-z0-9_.-]{3,24}$/.test(username)){
+      showToast('Choose a username with 3–24 letters, numbers, dots, dashes or underscores.');
+      setAuthStatus('For a new account, enter a username first.');
+      document.getElementById('authUsername')?.focus();
       return;
     }
     if(!/^\\+[1-9]\\d{7,14}$/.test(phone)){
-      showToast('Enter the mobile number with country code, e.g. +91 9876543210.');
-      setAuthStatus('Include + and your country code in the mobile number.');
+      showToast('Enter your phone number with country code, e.g. +91 9876543210.');
+      setAuthStatus('Include + and the country code in your mobile number.');
+      document.getElementById('authPhone')?.focus();
       return;
     }
     try{
+      setAuthStatus('Sending SMS code…');
+      if(createBtn)createBtn.disabled=true;
+      if(loginBtn)loginBtn.disabled=true;
       const {error}=await supabaseClient.auth.signInWithOtp({
         phone,
-        options:{shouldCreateUser:true,data:{username,display_name:username}}
+        options:{shouldCreateUser:mode==='signup',...(mode==='signup'?{data:{username,display_name:username}}:{})}
       });
       if(error)throw error;
       cpPendingOtpPhone=phone;
-      cpPendingOtpUsername=username;
+      cpPendingOtpUsername=mode==='signup'?username:'';
       if(otpWrap)otpWrap.style.display='block';
       if(verifyBtn)verifyBtn.disabled=false;
-      if(sendBtn)sendBtn.textContent='Resend SMS OTP';
+      if(createBtn)createBtn.textContent='Resend code';
+      if(loginBtn)loginBtn.textContent='Resend sign-in code';
       const phoneField=document.getElementById('authPhone');
-      const usernameField=document.getElementById('authUsername');
       if(phoneField)phoneField.value=phone;
-      setAuthStatus('SMS code sent to '+phone+'. Enter the code to finish registration or sign in.');
-      showToast('SMS OTP requested');
+      setAuthStatus('Code sent to '+phone+'. Enter the SMS code below to continue.');
+      document.getElementById('authOtp')?.focus();
+      showToast('SMS code requested');
     }catch(e){
-      setAuthStatus('Could not send SMS code: '+(e.message||'Unknown error'));
-      showToast(e.message||'Could not send SMS OTP');
+      setAuthStatus('Could not send SMS code: '+(e.message||'Check phone auth and SMS settings.'));
+      showToast(e.message||'Could not send SMS code');
+    }finally{
+      if(createBtn)createBtn.disabled=false;
+      if(loginBtn)loginBtn.disabled=false;
     }
     return;
   }
 
   if(!cpPendingOtpPhone){
-    showToast('Request an SMS OTP first');
-    setAuthStatus('Enter your username and mobile number, then select Send SMS OTP.');
+    showToast('Request an SMS code first');
+    setAuthStatus('Choose Create account or Sign in to request your SMS code.');
     return;
   }
   if(!/^\\d{4,8}$/.test(otp)){
     showToast('Enter the SMS code you received');
-    setAuthStatus('Enter the one-time code sent to '+cpPendingOtpPhone+'.');
+    setAuthStatus('Enter the verification code sent to '+cpPendingOtpPhone+'.');
+    document.getElementById('authOtp')?.focus();
     return;
   }
   try{
+    if(verifyBtn)verifyBtn.disabled=true;
+    setAuthStatus('Verifying your code…');
     const {data,error}=await supabaseClient.auth.verifyOtp({phone:cpPendingOtpPhone,token:otp,type:'sms'});
     if(error)throw error;
     currentCloudUser=data.user||data.session?.user||null;
-    if(!currentCloudUser)throw new Error('The OTP was accepted but no user session was returned.');
-
-    // Save the chosen username on the authenticated account profile.
+    if(!currentCloudUser)throw new Error('No user session was returned. Please try again.');
     if(cpPendingOtpUsername){
-      try{
-        const update=await supabaseClient.auth.updateUser({data:{username:cpPendingOtpUsername,display_name:cpPendingOtpUsername}});
-        if(!update.error&&update.data?.user)currentCloudUser=update.data.user;
-      }catch(e){console.warn('Username metadata could not be updated:',e.message)}
+      const update=await supabaseClient.auth.updateUser({data:{username:cpPendingOtpUsername,display_name:cpPendingOtpUsername}});
+      if(!update.error&&update.data?.user)currentCloudUser=update.data.user;
     }
     const finalName=cpPendingOtpUsername||currentCloudUser.user_metadata?.username||currentCloudUser.user_metadata?.display_name||currentCloudUser.phone||'Cricket Player';
     displayName=finalName;
@@ -430,27 +509,26 @@ async function authAction(mode){
     if(avatarEl)avatarEl.textContent=displayName.split(/\\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
     if(typeof refreshHomeGreeting==='function')refreshHomeGreeting();
     if(typeof renderProfiles==='function')renderProfiles();
-    setAuthStatus('Signed in as '+finalName+' · '+(currentCloudUser.phone||cpPendingOtpPhone));
+    setAuthStatus('You’re signed in as '+finalName+'. Your phone has been verified.');
     setCloudStatus('Connected',true);
     showToast('Phone verified — signed in');
     if(otpWrap)otpWrap.style.display='none';
-    if(document.getElementById('authOtp'))document.getElementById('authOtp').value='';
-    if(sendBtn)sendBtn.textContent='Send SMS OTP';
+    const otpField=document.getElementById('authOtp');if(otpField)otpField.value='';
+    if(createBtn)createBtn.textContent='Create account';
+    if(loginBtn)loginBtn.textContent='Sign in';
     if(verifyBtn)verifyBtn.disabled=true;
-    if(document.getElementById('authPhone'))document.getElementById('authPhone').disabled=false;
-    if(document.getElementById('authUsername'))document.getElementById('authUsername').disabled=false;
-    cpPendingOtpPhone='';
-    cpPendingOtpUsername='';
+    cpPendingOtpPhone='';cpPendingOtpUsername='';
     await syncOwnedMatches().catch(e=>console.warn('Initial cloud sync pending:',e.message));
   }catch(e){
-    setAuthStatus('OTP sign-in failed: '+(e.message||'Unknown error'));
-    showToast(e.message||'OTP verification failed');
+    setAuthStatus('Verification failed: '+(e.message||'Please check the code and try again.'));
+    showToast(e.message||'Verification failed');
+    if(verifyBtn)verifyBtn.disabled=false;
   }
 }
 async function signOutCloud(){if(!supabaseClient)return;try{const {error}=await supabaseClient.auth.signOut();if(error)throw error;currentCloudUser=null;setAuthStatus('Not signed in.');showToast('Signed out')}catch(e){showToast(e.message)}}
 
 
-document.getElementById('saveCloudConfig').addEventListener('click',saveCloudConfig);document.getElementById('testCloudConnection').addEventListener('click',testCloud);document.getElementById('signUpBtn').addEventListener('click',()=>authAction('signup'));document.getElementById('signInBtn').addEventListener('click',()=>authAction('signin'));document.getElementById('signOutBtn').addEventListener('click',signOutCloud);renderMatchFeeds();bootSupabase();
+document.getElementById('saveCloudConfig').addEventListener('click',saveCloudConfig);document.getElementById('testCloudConnection').addEventListener('click',testCloud);document.getElementById('signUpBtn').addEventListener('click',()=>authAction('signup'));document.getElementById('signInBtn').addEventListener('click',()=>authAction('login'));document.getElementById('authVerifyBtn').addEventListener('click',()=>authAction('verify'));document.getElementById('signOutBtn').addEventListener('click',signOutCloud);renderMatchFeeds();bootSupabase();
 
 // Keep navigation renders current as local demo data changes.
 const originalGo=go;go=function(page){originalGo(page);if(page==='discover')renderDiscover();if(page==='records'){renderRecordPlayerOptions();renderExternalRecords()}if(page==='pro')renderDevices();if(page==='profiles')renderProfileClaims()};
