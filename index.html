@@ -1217,17 +1217,22 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
           return;
         }
         dialog.remove();
-        recordPlayerDelivery(match, {
-          ...action,
-          type: 'wicket',
-          dismissal,
-          dismissedCode: selectedDismissedCode,
-          legal: noDelivery ? false : action.legal !== false,
-          totalRuns: 0,
-          extras: 0,
-          batterRuns: 0,
-          label: dismissal.toUpperCase()
-        });
+        try {
+          recordPlayerDelivery(match, {
+            ...action,
+            type: 'wicket',
+            dismissal,
+            dismissedCode: selectedDismissedCode,
+            legal: noDelivery ? false : action.legal !== false,
+            totalRuns: 0,
+            extras: 0,
+            batterRuns: 0,
+            label: dismissal.toUpperCase()
+          });
+        } catch (error) {
+          console.error('Cricket Pro could not record the selected wicket dismissal:', error);
+          showToast('Wicket was not recorded. Please try again; the app encountered an error.');
+        }
       }));
       return;
     }
