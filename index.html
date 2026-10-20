@@ -346,6 +346,58 @@
 
 [data-tournament-panel][hidden]{display:none!important}
 </style>
+<style id="cp-player-name-visibility-fix">
+/* Keep roster and directory names visible even if generic theme rules override them. */
+#teamDirectory .match-name,
+#teamDirectory .match-left,
+#teamDirectory .match-row .match-name,
+#clubDirectory .match-name,
+#tournamentDirectory .match-name,
+#playerQuickProfileContent h2,
+#playerProfileDirectory .match-name,
+#cpNextOverBowlerDialog .cp-choice-player-text,
+#cpMatchStartPicker .cp-choice-player-text,
+#cpWicketChoiceDialog .cp-choice-player-text {
+  color: #f8fafc !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  text-indent: 0 !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+#teamDirectory .match-name,
+#clubDirectory .match-name,
+#tournamentDirectory .match-name {
+  display: block !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  font-weight: 800 !important;
+}
+#teamDirectory .match-left {
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+#teamDirectory .match-row > div:first-child {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+#teamDirectory .match-row > div:first-child > div {
+  min-width: 0 !important;
+}
+#teamDirectory .match-row .match-sub,
+#cpNextOverBowlerDialog .cp-choice-player-text small,
+#cpMatchStartPicker .cp-choice-player-text small,
+#cpWicketChoiceDialog .cp-choice-player-text small {
+  color: #aab4c0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+</style>
 </head>
 <body><div class="app">
 <aside class="sidebar"><div class="brand"><div class="brandmark">C</div><span>CRICKET <em>PRO</em></span></div><div class="navlabel">WORKSPACE</div><nav class="nav" id="nav"><button class="active" data-page="home"><span class="ico">⌂</span><span class="navtext">Home</span></button><button data-page="discover"><span class="ico">⌕</span><span class="navtext">Discover</span></button><button data-page="live"><span class="ico">◉</span><span class="navtext">Live Matches</span></button><button data-page="teams"><span class="ico">♟</span><span class="navtext">Teams & Players</span></button><button data-page="clubs"><span class="ico">♧</span><span class="navtext">Clubs</span></button><button data-page="tournaments"><span class="ico">♜</span><span class="navtext">Tournaments</span></button><button data-page="scorecards"><span class="ico">▤</span><span class="navtext">Scorecards</span></button><button data-page="stats"><span class="ico">▥</span><span class="navtext">Statistics</span></button><button data-page="profiles"><span class="ico">◉</span><span class="navtext">Profiles</span></button><button data-page="account"><span class="ico">↗</span><span class="navtext">Sign In</span></button><button data-page="settings"><span class="ico">⚙</span><span class="navtext">Settings</span></button></nav><div class="sidebar-bottom"><div class="profile"><div class="avatar" id="avatar">CP</div><div class="profile-info"><b id="profileName">Cricket Player</b><small>Player profile</small></div><span class="more">···</span></div></div></aside>
