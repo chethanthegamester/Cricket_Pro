@@ -1836,7 +1836,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     const eligible=roster.filter(p=>p.code!==inn.strikerCode&&p.code!==inn.nonStrikerCode&&p.code!==dismissedCode&&!inn.batters?.[p.code]?.out);
     showPlayerChoice('Choose the incoming batter','NEXT BATTER',eligible,[],'No eligible batters left on the team. Create a new player below to continue.',teamId,p=>{
       if(inn.strikerCode===dismissedCode)inn.strikerCode=p.code;else if(inn.nonStrikerCode===dismissedCode)inn.nonStrikerCode=p.code;else inn.strikerCode=p.code;
-      innPlayerStats(inn,p.code,'batter');persistData();renderScoring(match);renderRecent();showToast(p.name+' comes in to bat');
+      innPlayerStats(inn,p.code,'batter');persistData();renderScoring(match);renderRecent();showToast(p.name+' comes in to bat');window.cpContinuePendingOverBowler?.(match);
     });
   }
   function showFielderChoice(match,action){
@@ -1970,6 +1970,45 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       });
     }
     return result;
+  };
+})();
+
+/* Automatic over-end prompt, applied after wicket and innings-end handlers. */
+(function installFinalOverEndWatcher(){
+  const recordBeforeFinalOverWatcher=recordPlayerDelivery;
+  recordPlayerDelivery=function(match,action){
+    const beforeNumber=Number(match.innings)||1;
+    const beforeInn=ensureInnings(match,beforeNumber);
+    const beforeBalls=Number(beforeInn.balls)||0;
+    const beforeWickets=Number(beforeInn.wickets)||0;
+    const beforeBowler=beforeInn.bowlerCode||'';
+    recordBeforeFinalOverWatcher(match,action);
+    const afterNumber=Number(match.innings)||beforeNumber;
+    const afterInn=ensureInnings(match,afterNumber);
+    const afterBalls=Number(afterInn.balls)||0;
+    const afterWickets=Number(afterInn.wickets)||0;
+    const legalDelivery=!!action && action.legal!==false && afterBalls>beforeBalls;
+    const wicketLimit=Math.max(1,Math.min(10,Number(match.wicketsPerInnings)||10));
+    const overJustFinished=afterNumber===beforeNumber && legalDelivery &&
+      Math.floor(beforeBalls/6)<Math.floor(afterBalls/6) &&
+      match.status!=='COMPLETED' && afterWickets<wicketLimit &&
+      afterBalls<Math.max(1,Number(match.overs)||20)*6;
+    if(!overJustFinished)return;
+    const pending={match,inningsNumber:afterNumber,previousBowler:beforeBowler};
+    if(action.type==='wicket' && afterWickets>beforeWickets){
+      window.cpPendingOverBowler=pending;
+      return;
+    }
+    window.cpPendingOverBowler=null;
+    window.cpShowNextOverBowlerDialog?.(match,afterInn,beforeBowler);
+  };
+  window.cpContinuePendingOverBowler=function(match){
+    const pending=window.cpPendingOverBowler;
+    if(!pending||pending.match!==match)return;
+    window.cpPendingOverBowler=null;
+    const innings=ensureInnings(match,Number(match.innings)||1);
+    if((Number(match.innings)||1)!==pending.inningsNumber||match.status==='COMPLETED')return;
+    window.cpShowNextOverBowlerDialog?.(match,innings,pending.previousBowler);
   };
 })();
 
