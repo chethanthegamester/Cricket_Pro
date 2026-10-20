@@ -536,18 +536,31 @@ function esc(value = '') {
   });
 }
 function playerDisplayName(p = {}) {
-  // Player codes can arrive under several legacy field names. Never show an ID
-  // as the display name when a real name is available in another field.
+  // Resolve the display name independently of the local roster copy, because
+  // old browser data may have a player code saved in its name field.
+  const code = String(p.code || p.playerCode || p.player_code || p.playerId || p.player_id || '').trim().toUpperCase();
+  const teamId = String(p.teamId || p.team_id || p.teamID || '').trim();
   const codes = new Set([
     p.code, p.playerCode, p.player_code, p.playerId, p.player_id, p.id
   ].map(value => String(value ?? '').trim().toUpperCase()).filter(Boolean));
-  const candidates = [
-    p.name, p.fullName, p.full_name, p.playerName, p.player_name,
-    p.displayName, p.display_name
-  ];
-  for (const value of candidates) {
-    const name = String(value ?? '').trim();
-    if (name && !codes.has(name.toUpperCase())) return name;
+  const validName = candidate => {
+    for (const value of [candidate?.name, candidate?.fullName, candidate?.full_name,
+      candidate?.playerName, candidate?.player_name, candidate?.displayName, candidate?.display_name]) {
+      const name = String(value ?? '').trim();
+      if (name && !codes.has(name.toUpperCase())) return name;
+    }
+    return '';
+  };
+  const ownName = validName(p);
+  if (ownName) return ownName;
+  // Fall back to the latest cloud roster record for this exact player/team.
+  if (code && typeof cloudPlayers !== 'undefined' && Array.isArray(cloudPlayers)) {
+    const match = cloudPlayers.find(candidate =>
+      String(candidate?.code || candidate?.playerCode || candidate?.player_code || '').trim().toUpperCase() === code &&
+      (!teamId || String(candidate?.teamId || candidate?.team_id || '').trim() === teamId)
+    );
+    const cloudName = validName(match);
+    if (cloudName) return cloudName;
   }
   return 'Name not set';
 }
