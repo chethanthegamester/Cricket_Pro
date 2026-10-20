@@ -1701,7 +1701,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     const teamId = innings.bowlingTeamId || (Number(innings.number)===1 ? match.teamBId : match.teamAId);
     const unique = new Map();
     [...(players||[]), ...(cloudPlayers||[])].forEach(p=>{
-      if(p && p.code && p.teamId===teamId && !unique.has(p.code)) unique.set(p.code,p);
+      if(p && p.code && String(p.teamId)===String(teamId) && !unique.has(String(p.code).trim().toUpperCase())) unique.set(String(p.code).trim().toUpperCase(),p);
     });
     return [...unique.values()];
   }
@@ -1728,7 +1728,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
         '<p class="notice">Choose from the full bowling team. '+esc(previousName)+' bowled the last over and cannot bowl consecutive overs.</p>'+
         '<div class="cp-bowler-grid">'+
           (roster.length?roster.map(p=>{
-            const isPrevious=p.code===previousBowlerCode;
+            const isPrevious=String(p.code).trim().toUpperCase()===String(previousBowlerCode||'').trim().toUpperCase();
             return '<button type="button" class="secondary cp-choice-player" data-next-bowler-code="'+esc(p.code)+'" '+(isPrevious?'disabled aria-disabled="true"':'')+'>'+
               '<span class="cp-choice-avatar">'+playerAvatarMarkup(p)+'</span><span class="cp-choice-player-text"><strong>'+esc(p.name)+'</strong><small>'+(isPrevious?'Just bowled · choose someone else':esc(p.role||'Player'))+'</small></span></button>';
           }).join(''):'<p class="notice">No players are assigned to the bowling team yet. Add players to that team first.</p>')+
@@ -1780,7 +1780,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
   const recordBeforeWicketPopups = recordPlayerDelivery;
   function uniqueRoster(teamId){
     const map=new Map();
-    [...(players||[]),...(cloudPlayers||[])].forEach(p=>{if(p&&p.code&&p.teamId===teamId&&!map.has(p.code))map.set(p.code,p)});
+    [...(players||[]),...(cloudPlayers||[])].forEach(p=>{if(p&&p.code&&String(p.teamId)===String(teamId)&&!map.has(String(p.code).trim().toUpperCase()))map.set(String(p.code).trim().toUpperCase(),p)});
     return [...map.values()];
   }
   function identityMarkup(person){
