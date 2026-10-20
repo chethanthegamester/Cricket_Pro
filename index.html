@@ -1729,8 +1729,8 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
         '<div class="cp-bowler-grid">'+
           (roster.length?roster.map(p=>{
             const isPrevious=String(p.code).trim().toUpperCase()===String(previousBowlerCode||'').trim().toUpperCase();
-            return '<button type="button" class="secondary cp-choice-player" data-next-bowler-code="'+esc(p.code)+'" '+(isPrevious?'disabled aria-disabled="true"':'')+'>'+
-              '<span class="cp-choice-avatar">'+playerAvatarMarkup(p)+'</span><span class="cp-choice-player-text"><strong>'+esc(p.name)+'</strong><small>'+(isPrevious?'Just bowled · choose someone else':esc(p.role||'Player'))+'</small></span></button>';
+            return '<button type="button" class="secondary cp-choice-player" data-next-bowler-code="'+esc(p.code)+'" '+(isPrevious?'disabled aria-disabled="true"':'')+' style="display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;width:100%!important;min-height:68px!important;text-align:left!important;padding:10px 14px!important">'+
+              '<span class="cp-choice-avatar" style="display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 48px!important;width:48px!important;height:48px!important;overflow:hidden!important;border-radius:50%!important">'+playerAvatarMarkup(p,'small')+'</span><span class="cp-choice-player-text" style="display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;flex:1!important;min-width:0!important;text-align:left!important"><strong>'+esc(p.name||p.displayName||p.full_name||p.playerName||p.code||'Player')+'</strong><small>'+(isPrevious?'Just bowled · choose someone else':esc(p.role||'Player'))+'</small></span></button>';
           }).join(''):'<p class="notice">No players are assigned to the bowling team yet. Add players to that team first.</p>')+
         '</div><button type="button" class="secondary cp-quick-add-trigger" data-create-next-bowler>＋ Create a player for this team</button></section>';
     dialog.style.cssText+=';position:fixed;inset:0;z-index:2147483000;display:flex';
@@ -2006,7 +2006,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       return;
     }
     window.cpPendingOverBowler=null;
-    Promise.resolve().then(()=>{if(window.cpActiveScoringMatch===match && match.status!=='COMPLETED' && Number(match.innings)===afterNumber)window.cpShowNextOverBowlerDialog?.(match,ensureInnings(match,afterNumber),beforeBowler);});
+    setTimeout(()=>{const active=window.cpActiveScoringMatch;const modal=document.getElementById('scoreModal');if(active&&String(active.id)===String(match.id)&&modal?.classList.contains('open')&&match.status!=='COMPLETED'&&Number(match.innings)===afterNumber){window.cpShowNextOverBowlerDialog?.(match,ensureInnings(match,afterNumber),beforeBowler);}},120);
   };
   window.cpContinuePendingOverBowler=function(match){
     const pending=window.cpPendingOverBowler;
@@ -2014,7 +2014,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     window.cpPendingOverBowler=null;
     const innings=ensureInnings(match,Number(match.innings)||1);
     if((Number(match.innings)||1)!==pending.inningsNumber||match.status==='COMPLETED')return;
-    Promise.resolve().then(()=>{if(window.cpActiveScoringMatch===match && match.status!=='COMPLETED' && Number(match.innings)===pending.inningsNumber)window.cpShowNextOverBowlerDialog?.(match,ensureInnings(match,pending.inningsNumber),pending.previousBowler);});
+    setTimeout(()=>{const active=window.cpActiveScoringMatch;const modal=document.getElementById('scoreModal');if(active&&String(active.id)===String(match.id)&&modal?.classList.contains('open')&&match.status!=='COMPLETED'&&Number(match.innings)===pending.inningsNumber){window.cpShowNextOverBowlerDialog?.(match,ensureInnings(match,pending.inningsNumber),pending.previousBowler);}},120);
   };
 })();
 
@@ -2118,7 +2118,7 @@ window.cpOpenMatchStartPickers=function(match){
   const team=[...(teams||[]),...(cloudTeams||[])].find(t=>String(t?.id)===String(teamId));
   const teamName=team?.name||(String(teamId)===String(match.teamAId)?match.a:match.b)||'Team roster';
   dialog.innerHTML='<section class="cp-score-dialog" role="dialog" aria-modal="true" style="display:block!important;visibility:visible!important;opacity:1!important;max-height:85dvh;overflow:auto;width:min(520px,100%);background:var(--panel,#151b22);color:var(--text,#fff);padding:18px;border-radius:18px"><div class="cp-score-dialog-head"><div><div class="eyebrow">'+esc(role)+'</div><h2>'+esc(title)+'</h2><p class="match-sub">'+esc(teamName)+'</p></div></div>'+
-  (list.length?'<div class="cp-bowler-grid">'+list.map(p=>'<button type="button" class="secondary cp-choice-player" data-start-code="'+esc(p.code)+'" style="display:flex!important;align-items:center;gap:12px;text-align:left;min-height:60px;width:100%;margin:6px 0"><span class="cp-choice-avatar">'+playerAvatarMarkup(p,'small')+'</span><span class="cp-choice-player-text"><strong>'+esc(displayName(p))+'</strong><small>'+esc(p.role||'Player')+'</small></span></button>').join('')+'</div>':'<p class="notice">No players are assigned to '+esc(teamName)+'. Close this pop-up, add players to that team, and reopen the match.</p>')+
+  (list.length?'<div class="cp-bowler-grid">'+list.map(p=>'<button type="button" class="secondary cp-choice-player" data-start-code="'+esc(p.code)+'" style="display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;text-align:left!important;min-height:68px!important;width:100%!important;margin:6px 0!important;padding:10px 14px!important"><span class="cp-choice-avatar" style="display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 48px!important;width:48px!important;height:48px!important;overflow:hidden!important;border-radius:50%!important">'+playerAvatarMarkup(p,'small')+'</span><span class="cp-choice-player-text" style="display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;flex:1!important;min-width:0!important;text-align:left!important"><strong>'+esc(displayName(p))+'</strong><small>'+esc(p.role||'Player')+'</small></span></button>').join('')+'</div>':'<p class="notice">No players are assigned to '+esc(teamName)+'. Close this pop-up, add players to that team, and reopen the match.</p>')+
   '<button type="button" class="secondary" data-start-cancel style="margin-top:12px;width:100%">Close</button></section>';
   document.body.appendChild(dialog);
   dialog.querySelector('[data-start-cancel]').addEventListener('click',()=>dialog.remove());
@@ -2147,6 +2147,10 @@ window.cpOpenMatchStartPickers=function(match){
 #cpExtrasPopup small{display:block;font-size:.8em;opacity:.8}
 .cp-score-dialog-backdrop,#cpWicketDialog,#cpWicketChoiceDialog,#cpQuickPlayerDialog,#cpBowlerDialog,#cpNextOverBowlerDialog{position:fixed!important;inset:0!important;z-index:100000!important;width:100vw!important;max-height:100dvh!important;overflow:auto!important}
 .cp-score-dialog-backdrop .cp-score-dialog{position:relative!important;max-height:calc(100dvh - 28px)!important;overflow-y:auto!important;margin:auto!important}
+.cp-score-dialog-backdrop .cp-bowler-grid{display:flex!important;flex-direction:column!important;gap:8px!important}
+.cp-score-dialog-backdrop .cp-choice-player{box-sizing:border-box!important;white-space:normal!important}
+.cp-score-dialog-backdrop .cp-choice-avatar img,.cp-score-dialog-backdrop .cp-choice-avatar svg{display:block!important;width:100%!important;height:100%!important;max-width:48px!important;max-height:48px!important;object-fit:cover!important;flex:0 0 auto!important}
+.cp-score-dialog-backdrop .cp-choice-player-text strong,.cp-score-dialog-backdrop .cp-choice-player-text small{display:block!important;overflow-wrap:anywhere!important;text-align:left!important}
 @media(max-width:420px){#cpExtrasPopup .scoreboard-keypad{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 
