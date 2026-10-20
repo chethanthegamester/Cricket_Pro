@@ -1444,20 +1444,33 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     compact.id = 'cpCompactBattingFigures';
     compact.className = 'cp-batter-summary';
     compact.innerHTML = '<div class="cp-batter-summary-title">BATSMAN</div>' +
-      '<div class="cp-batter-head"><span>Batter</span><span>R</span><span>4s</span><span>6s</span></div>' +
+      '<div class="cp-batter-head"><span>Batter</span><span>R</span><span>B</span><span>4s</span><span>6s</span><span>SR</span></div>' +
       (activeCodes.length ? activeCodes.map(code => {
         const batter = innings.batters?.[code] || {};
         const player = playerForCode(code);
-        return '<div class="cp-batter-line"><span class="cp-batter-name">' +
-          esc(player?.name || 'Batter') + (code === innings.strikerCode ? ' *' : '') +
+        return '<button type="button" class="cp-batter-line '+(code === innings.strikerCode ? 'is-striker' : '')+'" data-cp-batter-code="'+esc(code)+'" title="Click to put this batter on strike" style="width:100%;text-align:left;cursor:pointer"><span class="cp-batter-name">' +
+          esc(player?.name || code || 'Batter') + (code === innings.strikerCode ? '  • ON STRIKE' : '') +
           '</span><strong>' + (Number(batter.runs) || 0) + '</strong><span>' +
-          (Number(batter.fours) || 0) + '</span><span>' + (Number(batter.sixes) || 0) + '</span></div>';
+          (Number(batter.balls) || 0) + '</span><span>' + (Number(batter.fours) || 0) + '</span><span>' + (Number(batter.sixes) || 0) + '</span><span>' + (Number(batter.balls) ? (((Number(batter.runs)||0)/Number(batter.balls))*100).toFixed(1) : '0.0') + '</span></button>';
       }).join('') : '<p class="notice">Choose the two batters above.</p>');
 
     // Keep the figures directly beneath the score, like the supplied reference.
     const scoreCard = root.querySelector('.result-card');
     if (scoreCard) scoreCard.insertAdjacentElement('afterend', compact);
     else root.prepend(compact);
+
+    // Let the scorer manually select the batter on strike by tapping their batting-figures row.
+    compact.querySelectorAll('[data-cp-batter-code]').forEach(row => row.addEventListener('click', () => {
+      const chosen = row.dataset.cpBatterCode;
+      if (!chosen) return;
+      const oldStriker = innings.strikerCode;
+      if (chosen !== oldStriker) {
+        if (chosen === innings.nonStrikerCode) innings.nonStrikerCode = oldStriker;
+        innings.strikerCode = chosen;
+        persistData();
+        renderScoring(match);
+      }
+    }));
 
     // The earlier extras patch replaces the old button row; add a real wicket control here.
     const extraActions = root.querySelector('.scoreboard-extra-actions');
@@ -2147,6 +2160,18 @@ window.cpOpenMatchStartPickers=function(match){
 #cpExtrasPopup small{display:block;font-size:.8em;opacity:.8}
 .cp-score-dialog-backdrop,#cpWicketDialog,#cpWicketChoiceDialog,#cpQuickPlayerDialog,#cpBowlerDialog,#cpNextOverBowlerDialog{position:fixed!important;inset:0!important;z-index:100000!important;width:100vw!important;max-height:100dvh!important;overflow:auto!important}
 .cp-score-dialog-backdrop .cp-score-dialog{position:relative!important;max-height:calc(100dvh - 28px)!important;overflow-y:auto!important;margin:auto!important}
+#scoreModalContent{display:flex!important;flex-direction:column!important;gap:12px!important}
+#scoreModalContent>.result-card{border:1px solid var(--line,#334155)!important;border-radius:16px!important;padding:18px!important}
+#scoreModalContent .cp-batter-summary{border:1px solid var(--line,#334155)!important;border-radius:14px!important;padding:12px!important;overflow-x:auto!important}
+#scoreModalContent .cp-batter-head,#scoreModalContent .cp-batter-line{display:grid!important;grid-template-columns:minmax(135px,2fr) repeat(5,minmax(30px,.55fr))!important;align-items:center!important;gap:8px!important}
+#scoreModalContent .cp-batter-head{font-size:11px!important;color:var(--muted)!important;padding:8px!important}
+#scoreModalContent .cp-batter-line{border:1px solid transparent!important;border-radius:10px!important;background:var(--panel2,#1b2430)!important;color:var(--text,#fff)!important;padding:11px 8px!important;margin:5px 0!important;font:inherit!important}
+#scoreModalContent .cp-batter-line.is-striker{border:2px solid var(--green,#8bd450)!important;box-shadow:0 0 0 2px rgba(139,212,80,.14)!important;background:rgba(139,212,80,.09)!important}
+#scoreModalContent .cp-batter-name{font-weight:800!important;overflow-wrap:anywhere!important}
+#scoreModalContent .cp-batter-line strong,#scoreModalContent .cp-batter-line>span:not(.cp-batter-name){text-align:center!important;font-variant-numeric:tabular-nums!important}
+.arrow{display:none!important}
+@media(max-width:520px){#scoreModalContent .cp-batter-head,#scoreModalContent .cp-batter-line{grid-template-columns:minmax(110px,2fr) repeat(5,minmax(25px,.5fr))!important;gap:4px!important;font-size:12px!important}#scoreModalContent .cp-batter-summary{padding:8px!important}}
+
 .cp-score-dialog-backdrop .cp-bowler-grid{display:flex!important;flex-direction:column!important;gap:8px!important}
 .cp-score-dialog-backdrop .cp-choice-player{box-sizing:border-box!important;white-space:normal!important}
 .cp-score-dialog-backdrop .cp-choice-avatar img,.cp-score-dialog-backdrop .cp-choice-avatar svg{display:block!important;width:100%!important;height:100%!important;max-width:48px!important;max-height:48px!important;object-fit:cover!important;flex:0 0 auto!important}
@@ -2154,5 +2179,36 @@ window.cpOpenMatchStartPickers=function(match){
 @media(max-width:420px){#cpExtrasPopup .scoreboard-keypad{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 
+
+<script id="cp-over-end-popup-reliability">
+(function(){
+ if(window.__cpOverPopupFallbackInstalled)return;window.__cpOverPopupFallbackInstalled=true;
+ let pending=null;
+ document.addEventListener('click',function(event){
+  const button=event.target.closest('#scoreModalContent [data-runs],#scoreModalContent [data-extra],#scoreModalContent [data-wicket],#scoreModalContent [data-cp-open-wicket]');
+  if(!button)return;
+  const match=window.cpActiveScoringMatch;if(!match)return;
+  const innings=ensureInnings(match,Number(match.innings)||1);
+  pending={matchId:String(match.id),match,inningsNumber:Number(match.innings)||1,ballsBefore:Number(innings.balls)||0,previousBowler:innings.bowlerCode||''};
+  const p=pending;
+  setTimeout(function(){
+   if(pending!==p)return;
+   const active=window.cpActiveScoringMatch,modal=document.getElementById('scoreModal');
+   if(!active||String(active.id)!==p.matchId||!modal?.classList.contains('open')||Number(active.innings)!==p.inningsNumber)return;
+   const inn=ensureInnings(active,p.inningsNumber),after=Number(inn.balls)||0;
+   if(after<=p.ballsBefore||after%6!==0||!inn.deliveries?.length)return;
+   const last=inn.deliveries[inn.deliveries.length-1];if(last.legal===false)return;
+   const marker=p.matchId+':'+p.inningsNumber+':'+after;
+   if(window.__cpOverPopupShown===marker)return;
+   window.__cpOverPopupShown=marker;
+   setTimeout(function(){
+    if(document.getElementById('cpNextOverBowlerDialog'))return;
+    const latest=window.cpActiveScoringMatch,latestInn=latest&&ensureInnings(latest,p.inningsNumber);
+    if(latest&&String(latest.id)===p.matchId&&latest.status!=='COMPLETED'&&latestInn&&Number(latestInn.balls)===after&&typeof window.cpShowNextOverBowlerDialog==='function')window.cpShowNextOverBowlerDialog(latest,latestInn,p.previousBowler);
+   },180);
+  },180);
+ },true);
+})();
+</script>
 </body>
 </html>
