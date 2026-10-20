@@ -152,6 +152,109 @@
 #scoreModalContent .scoreboard-keypad button small{font-size:10px;font-weight:650}
 @media(max-width:420px){#scoreModalContent .scoreboard-keypad{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+/* Fix scoring picker avatar/name overlap and keep the dialog inside the viewport. */
+#cpNextOverBowlerDialog,
+#cpMatchStartPicker,
+#cpWicketChoiceDialog,
+#cpQuickPlayerDialog,
+#cpWicketDialog{
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:14px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+#cpNextOverBowlerDialog .cp-score-dialog,
+#cpMatchStartPicker .cp-score-dialog,
+#cpWicketChoiceDialog .cp-score-dialog,
+#cpQuickPlayerDialog .cp-score-dialog,
+#cpWicketDialog .cp-score-dialog{
+  box-sizing:border-box!important;
+  width:min(520px,100%)!important;
+  max-width:520px!important;
+  max-height:calc(100dvh - 28px)!important;
+  margin:auto!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+}
+.cp-choice-player{
+  box-sizing:border-box!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+.cp-choice-player > .cp-choice-avatar{
+  display:flex!important;
+  position:relative!important;
+  flex:0 0 48px!important;
+  width:48px!important;
+  height:48px!important;
+  min-width:48px!important;
+  min-height:48px!important;
+  padding:0!important;
+  border-radius:50%!important;
+  overflow:hidden!important;
+}
+.cp-choice-player > .cp-choice-avatar > .identity-icon.player-photo{
+  display:block!important;
+  position:relative!important;
+  flex:0 0 100%!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  overflow:hidden!important;
+  line-height:0!important;
+}
+.cp-choice-player > .cp-choice-avatar > .identity-icon.player-photo img{
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:cover!important;
+  border-radius:50%!important;
+}
+.cp-choice-player-text{
+  flex:1 1 auto!important;
+  width:0!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  text-align:left!important;
+}
+.cp-choice-player-text strong,
+.cp-choice-player-text small{
+  display:block!important;
+  max-width:100%!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+  text-align:left!important;
+}
+.cp-choice-player-text strong{font-size:14px!important;line-height:1.3!important}
+#cpNextOverBowlerDialog .cp-score-dialog-head{align-items:flex-start!important}
+@media(max-width:480px){
+  #cpNextOverBowlerDialog,
+  #cpMatchStartPicker,
+  #cpWicketChoiceDialog,
+  #cpQuickPlayerDialog,
+  #cpWicketDialog{padding:10px!important}
+  #cpNextOverBowlerDialog .cp-score-dialog,
+  #cpMatchStartPicker .cp-score-dialog,
+  #cpWicketChoiceDialog .cp-score-dialog,
+  #cpQuickPlayerDialog .cp-score-dialog,
+  #cpWicketDialog .cp-score-dialog{padding:14px!important}
+}
+
 /* Circular player identities and quick-add controls in scoring popups */
 .cp-choice-player-list{display:grid;grid-template-columns:1fr;gap:7px;max-height:42vh;overflow:auto;margin:10px 0}
 .cp-choice-player{display:flex;align-items:center;gap:11px;width:100%;text-align:left;min-height:58px;padding:7px 11px}
