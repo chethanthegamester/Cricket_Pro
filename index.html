@@ -1728,6 +1728,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
               '<span class="cp-choice-avatar">'+badgeIcon(p.icon,p.name,initials(p.name))+'</span><span class="cp-choice-player-text"><strong>'+esc(p.name)+'</strong><small>'+(isPrevious?'Just bowled · choose someone else':esc(p.role||'Player'))+'</small></span></button>';
           }).join(''):'<p class="notice">No players are assigned to the bowling team yet. Add players to that team first.</p>')+
         '</div><button type="button" class="secondary cp-quick-add-trigger" data-create-next-bowler>＋ Create a player for this team</button></section>';
+    dialog.style.cssText+=';position:fixed;inset:0;z-index:2147483000;display:flex';
     document.body.appendChild(dialog);
     dialog.querySelector('[data-create-next-bowler]')?.addEventListener('click',()=>{
       const teamId=innings.bowlingTeamId||(Number(innings.number)===1?match.teamBId:match.teamAId);
@@ -1735,7 +1736,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       const quick=document.createElement('div');quick.id='cpQuickPlayerDialog';quick.className='cp-score-dialog-backdrop cp-quick-player-layer';
       const team=[...(teams||[]),...(cloudTeams||[])].find(t=>t&&t.id===teamId);
       quick.innerHTML='<section class="cp-score-dialog" role="dialog" aria-modal="true"><div class="cp-score-dialog-head"><div><div class="eyebrow">QUICK ADD</div><h2>Create a player</h2></div><button type="button" class="cp-dialog-close" data-cancel>×</button></div><p class="notice">Add someone to '+esc(team?.name||'this team')+' without leaving scoring.</p><form id="cpNextBowlerQuickForm"><div class="field"><label for="cpNextBowlerQuickName">Player name</label><input id="cpNextBowlerQuickName" required maxlength="70" placeholder="Enter player name"></div><div class="field"><label for="cpNextBowlerQuickRole">Role</label><select id="cpNextBowlerQuickRole"><option>Bowler</option><option>All-rounder</option><option>Batter</option><option>Wicketkeeper</option></select></div><div class="cp-quick-player-actions"><button type="button" class="secondary" data-cancel>Cancel</button><button type="submit" class="primary">＋ Create and select</button></div></form></section>';
-      root.appendChild(quick);quick.querySelectorAll('[data-cancel]').forEach(b=>b.addEventListener('click',()=>quick.remove()));
+      quick.style.cssText+=';position:fixed;inset:0;z-index:2147483001;display:flex';document.body.appendChild(quick);quick.querySelectorAll('[data-cancel]').forEach(b=>b.addEventListener('click',()=>quick.remove()));
       quick.querySelector('#cpNextBowlerQuickForm').addEventListener('submit',e=>{
         e.preventDefault();const name=quick.querySelector('#cpNextBowlerQuickName').value.trim(),role=quick.querySelector('#cpNextBowlerQuickRole').value;if(!name)return;
         if([...(players||[]),...(cloudPlayers||[])].some(p=>p&&p.teamId===teamId&&String(p.name||'').toLowerCase()===name.toLowerCase())){showToast('That player is already on this team');return}
@@ -1796,7 +1797,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     const team=[...(teams||[]),...(cloudTeams||[])].find(t=>t&&t.id===teamId);
     const dialog=document.createElement('div');dialog.id='cpQuickPlayerDialog';dialog.className='cp-score-dialog-backdrop cp-quick-player-layer';
     dialog.innerHTML='<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpQuickPlayerTitle"><div class="cp-score-dialog-head"><div><div class="eyebrow">QUICK ADD</div><h2 id="cpQuickPlayerTitle">Create a player</h2></div><button type="button" class="cp-dialog-close" data-quick-cancel aria-label="Close">×</button></div><p class="notice">Add someone to '+esc(team?.name||'this team')+' without leaving scoring.</p><form id="cpQuickPlayerForm"><div class="field"><label for="cpQuickPlayerName">Player name</label><input id="cpQuickPlayerName" required maxlength="70" placeholder="Enter player name" autocomplete="off"></div><div class="field"><label for="cpQuickPlayerRole">Role</label><select id="cpQuickPlayerRole"><option>Batter</option><option>Bowler</option><option>All-rounder</option><option>Wicketkeeper</option></select></div><div class="cp-quick-player-actions"><button type="button" class="secondary" data-quick-cancel>Cancel</button><button type="submit" class="primary">＋ Create player</button></div></form></section>';
-    root.appendChild(dialog);
+    dialog.style.cssText+=';position:fixed;inset:0;z-index:2147483000;display:flex';document.body.appendChild(dialog);
     dialog.querySelectorAll('[data-quick-cancel]').forEach(b=>b.addEventListener('click',()=>dialog.remove()));
     dialog.querySelector('#cpQuickPlayerForm').addEventListener('submit',e=>{
       e.preventDefault();const name=dialog.querySelector('#cpQuickPlayerName').value.trim(),role=dialog.querySelector('#cpQuickPlayerRole').value;
@@ -1820,7 +1821,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     dialog.innerHTML='<section class="cp-score-dialog" role="dialog" aria-modal="true" aria-labelledby="cpWicketChoiceTitle"><div class="cp-score-dialog-head"><div><div class="eyebrow">'+esc(eyebrow)+'</div><h2 id="cpWicketChoiceTitle">'+esc(title)+'</h2>'+(team?'<div class="cp-choice-team-label">'+teamIdentityMarkup(teamId)+'<span>'+esc(team.name)+'</span></div>':'')+'</div></div>'+
       (available.length?'<div class="cp-choice-player-list">'+available.map(p=>'<button type="button" class="secondary cp-choice-player" data-choice-code="'+esc(p.code)+'">'+identityMarkup(p)+'<span class="cp-choice-player-text"><strong>'+esc(p.name)+'</strong>'+(p.role?'<small>'+esc(p.role)+'</small>':'')+'</span></button>').join('')+'</div>':'<p class="notice">'+esc(emptyText)+'</p>')+
       '<button type="button" class="secondary cp-quick-add-trigger" data-create-player>＋ Create a player for this team</button></section>';
-    root.appendChild(dialog);
+    dialog.style.cssText+=';position:fixed;inset:0;z-index:2147483000;display:flex';document.body.appendChild(dialog);
     dialog.querySelectorAll('[data-choice-code]').forEach(button=>button.addEventListener('click',()=>{const chosen=available.find(p=>p.code===button.dataset.choiceCode);if(!chosen)return;dialog.remove();onChoose(chosen)}));
     dialog.querySelector('[data-create-player]').addEventListener('click',()=>createQuickPlayer(teamId,created=>{
       const updated=uniqueRoster(teamId),found=updated.find(p=>p.code===created.code)||created;
@@ -2000,7 +2001,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
       return;
     }
     window.cpPendingOverBowler=null;
-    window.cpShowNextOverBowlerDialog?.(match,afterInn,beforeBowler);
+    Promise.resolve().then(()=>{if(window.cpActiveScoringMatch===match && match.status!=='COMPLETED' && Number(match.innings)===afterNumber)window.cpShowNextOverBowlerDialog?.(match,ensureInnings(match,afterNumber),beforeBowler);});
   };
   window.cpContinuePendingOverBowler=function(match){
     const pending=window.cpPendingOverBowler;
@@ -2008,7 +2009,7 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
     window.cpPendingOverBowler=null;
     const innings=ensureInnings(match,Number(match.innings)||1);
     if((Number(match.innings)||1)!==pending.inningsNumber||match.status==='COMPLETED')return;
-    window.cpShowNextOverBowlerDialog?.(match,innings,pending.previousBowler);
+    Promise.resolve().then(()=>{if(window.cpActiveScoringMatch===match && match.status!=='COMPLETED' && Number(match.innings)===pending.inningsNumber)window.cpShowNextOverBowlerDialog?.(match,ensureInnings(match,pending.inningsNumber),pending.previousBowler);});
   };
 })();
 
