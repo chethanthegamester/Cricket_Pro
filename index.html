@@ -152,6 +152,77 @@
 #scoreModalContent .scoreboard-keypad button small{font-size:10px;font-weight:650}
 @media(max-width:420px){#scoreModalContent .scoreboard-keypad{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+/* Final fix: reserve a real text column beside each player avatar. */
+#cpNextOverBowlerDialog .cp-choice-player,
+#cpMatchStartPicker .cp-choice-player,
+#cpWicketChoiceDialog .cp-choice-player{
+  display:grid!important;
+  grid-template-columns:48px minmax(0,1fr)!important;
+  align-items:center!important;
+  justify-content:stretch!important;
+  column-gap:12px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:68px!important;
+  height:auto!important;
+  text-align:left!important;
+  white-space:normal!important;
+}
+#cpNextOverBowlerDialog .cp-choice-player > .cp-choice-avatar,
+#cpMatchStartPicker .cp-choice-player > .cp-choice-avatar,
+#cpWicketChoiceDialog .cp-choice-player > .cp-choice-avatar{
+  grid-column:1!important;
+  grid-row:1!important;
+  width:48px!important;
+  height:48px!important;
+  min-width:48px!important;
+  max-width:48px!important;
+  flex:none!important;
+}
+#cpNextOverBowlerDialog .cp-choice-player > .cp-choice-player-text,
+#cpMatchStartPicker .cp-choice-player > .cp-choice-player-text,
+#cpWicketChoiceDialog .cp-choice-player > .cp-choice-player-text{
+  grid-column:2!important;
+  grid-row:1!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:auto!important;
+  flex:none!important;
+  overflow:visible!important;
+  visibility:visible!important;
+  opacity:1!important;
+  text-align:left!important;
+}
+#cpNextOverBowlerDialog .cp-choice-player-text strong,
+#cpMatchStartPicker .cp-choice-player-text strong,
+#cpWicketChoiceDialog .cp-choice-player-text strong{
+  display:block!important;
+  width:100%!important;
+  color:var(--text,#f8fafc)!important;
+  font-size:14px!important;
+  font-weight:800!important;
+  line-height:1.35!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+#cpNextOverBowlerDialog .cp-choice-player-text small,
+#cpMatchStartPicker .cp-choice-player-text small,
+#cpWicketChoiceDialog .cp-choice-player-text small{
+  display:block!important;
+  width:100%!important;
+  margin-top:3px!important;
+  color:var(--muted,#aab4c0)!important;
+  font-size:12px!important;
+  line-height:1.3!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+
 /* Fix scoring picker avatar/name overlap and keep the dialog inside the viewport. */
 #cpNextOverBowlerDialog,
 #cpMatchStartPicker,
