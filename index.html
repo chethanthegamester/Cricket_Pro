@@ -536,17 +536,26 @@ function esc(value = '') {
   });
 }
 function playerDisplayName(p = {}) {
-  const code = String(p.code ?? '').trim().toUpperCase();
-  const candidates = [p.displayName, p.display_name, p.playerName, p.player_name, p.full_name, p.fullName, p.name];
+  // Player codes can arrive under several legacy field names. Never show an ID
+  // as the display name when a real name is available in another field.
+  const codes = new Set([
+    p.code, p.playerCode, p.player_code, p.playerId, p.player_id, p.id
+  ].map(value => String(value ?? '').trim().toUpperCase()).filter(Boolean));
+  const candidates = [
+    p.name, p.fullName, p.full_name, p.playerName, p.player_name,
+    p.displayName, p.display_name
+  ];
   for (const value of candidates) {
     const name = String(value ?? '').trim();
-    if (name && name.toUpperCase() !== code) return name;
+    if (name && !codes.has(name.toUpperCase())) return name;
   }
   return 'Name not set';
 }
 function normalizePlayerName(p = {}) {
-  const name = playerDisplayName(p);
-  return name === 'Name not set' ? p : { ...p, name };
+  const code = p.code || p.playerCode || p.player_code || p.playerId || p.player_id || '';
+  const teamId = p.teamId || p.team_id || p.teamID || '';
+  const name = playerDisplayName({ ...p, code });
+  return { ...p, ...(code ? { code } : {}), ...(teamId ? { teamId } : {}), name };
 }
  const pages={home:'Good morning',discover:'Discover Cricket',live:'Live Matches',teams:'Teams & Players',clubs:'Clubs',tournaments:'Tournaments',scorecards:'Scorecards',records:'External Records',stats:'Statistics',profiles:'Profiles',account:'Sign In',pro:'Cricket Pro Plan',settings:'Settings'};
 const STORAGE_KEY='cricketProDataV1';
