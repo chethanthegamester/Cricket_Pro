@@ -1973,60 +1973,77 @@ document.getElementById('profileName').textContent=displayName;document.getEleme
   };
 })();
 
-/* Clean scoring controls: Extras and next-over bowler picker open only when tapped. */
-(function installClickToOpenScoringTools(){
-  const renderBeforeTools = renderScoring;
-  renderScoring = function(match){
-    const result = renderBeforeTools(match);
-    const root = document.getElementById('scoreModalContent');
-    if (!root) return result;
-    let actions = root.querySelector('#cpScoringQuickActions');
-    if (!actions) {
-      actions = document.createElement('div');
-      actions.id = 'cpScoringQuickActions';
-      actions.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0';
-      actions.innerHTML = '<button type="button" class="secondary" data-cp-open-extras>＋ Extras</button><button type="button" class="secondary" data-cp-open-next-bowler>Next Over Bowler</button>';
-      const existingActions = root.querySelector('.scoreboard-extra-actions');
-      if (existingActions) existingActions.insertAdjacentElement('afterend', actions);
-      else { const card=root.querySelector('.result-card'); if(card) card.insertAdjacentElement('afterend',actions); else root.prepend(actions); }
-    }
-    let overlay = document.getElementById('cpExtrasPopup');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'cpExtrasPopup';
-      overlay.setAttribute('role','dialog'); overlay.setAttribute('aria-modal','true'); overlay.setAttribute('aria-label','Score extras');
-      overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:100020;background:rgba(0,0,0,.78);padding:16px;box-sizing:border-box;align-items:center;justify-content:center';
-      overlay.innerHTML = '<section style="width:min(680px,100%);max-height:90dvh;overflow:auto;box-sizing:border-box;background:#101820;color:#fff;border:1px solid #b8f34a;border-radius:16px;padding:18px;box-shadow:0 12px 50px #000c"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><h3 style="margin:0">Score Extras</h3><button type="button" class="secondary" data-cp-close-extras>✕ Close</button></div><p class="notice">Wides and no-balls do not count as legal balls.</p><h4>Wide — extra batter runs</h4><div class="scoreboard-keypad">'+[0,1,2,3,4].map(n=>'<button type="button" class="secondary" data-cp-extra="wide" data-runs="'+n+'">WD +'+n+'<small>'+(n+1)+' total</small></button>').join('')+'</div><h4>No-ball — batter runs</h4><div class="scoreboard-keypad">'+[0,1,2,3,4,5,6].map(n=>'<button type="button" class="secondary" data-cp-extra="noball" data-runs="'+n+'">NB +'+n+'<small>'+(n+1)+' total</small></button>').join('')+'</div><h4>Byes</h4><div class="scoreboard-keypad">'+[1,2,3,4].map(n=>'<button type="button" class="secondary" data-cp-extra="bye" data-runs="'+n+'">'+n+' bye</button>').join('')+'</div><h4>Leg-byes</h4><div class="scoreboard-keypad">'+[1,2,3,4].map(n=>'<button type="button" class="secondary" data-cp-extra="legbye" data-runs="'+n+'">'+n+' leg-bye</button>').join('')+'</div></section>';
-      document.body.appendChild(overlay);
-    }
-    return result;
-  };
-  document.addEventListener('click', function(e){
-    const openExtras=e.target.closest&&e.target.closest('[data-cp-open-extras]');
-    if(openExtras){const p=document.getElementById('cpExtrasPopup');if(p)p.style.display='flex';return;}
-    if(e.target.closest&&e.target.closest('[data-cp-close-extras]')){const p=document.getElementById('cpExtrasPopup');if(p)p.style.display='none';return;}
-    const b=e.target.closest&&e.target.closest('#cpExtrasPopup [data-cp-extra]');
-    if(b){
+/* Reliable scoring controls: bind directly to buttons and restore after each score render. */
+(function installReliableScoringPopups(){
+  function ensureExtrasPopup(){
+    let overlay=document.getElementById('cpExtrasPopup');
+    if(overlay)return overlay;
+    overlay=document.createElement('div');
+    overlay.id='cpExtrasPopup';
+    overlay.setAttribute('role','dialog');
+    overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-label','Score extras');
+    overlay.style.cssText='display:none;position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.82);padding:16px;box-sizing:border-box;align-items:center;justify-content:center';
+    overlay.innerHTML='<section style="width:min(680px,100%);max-height:90vh;overflow:auto;box-sizing:border-box;background:#101820;color:#fff;border:2px solid #b8f34a;border-radius:16px;padding:18px;box-shadow:0 12px 50px #000c"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><h3 style="margin:0">Score Extras</h3><button type="button" class="secondary" data-cp-close-extras>✕ Close</button></div><p>Wides and no-balls do not count as legal balls.</p><h4>Wide — extra batter runs</h4><div class="scoreboard-keypad">'+[0,1,2,3,4].map(n=>'<button type="button" class="secondary" data-cp-extra="wide" data-runs="'+n+'">WD +'+n+'<small>'+(n+1)+' total</small></button>').join('')+'</div><h4>No-ball — batter runs</h4><div class="scoreboard-keypad">'+[0,1,2,3,4,5,6].map(n=>'<button type="button" class="secondary" data-cp-extra="noball" data-runs="'+n+'">NB +'+n+'<small>'+(n+1)+' total</small></button>').join('')+'</div><h4>Byes</h4><div class="scoreboard-keypad">'+[1,2,3,4].map(n=>'<button type="button" class="secondary" data-cp-extra="bye" data-runs="'+n+'">'+n+' bye</button>').join('')+'</div><h4>Leg-byes</h4><div class="scoreboard-keypad">'+[1,2,3,4].map(n=>'<button type="button" class="secondary" data-cp-extra="legbye" data-runs="'+n+'">'+n+' leg-bye</button>').join('')+'</div></section>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',function(e){
+      if(e.target===overlay||e.target.closest('[data-cp-close-extras]')){overlay.style.display='none';return;}
+      const b=e.target.closest('[data-cp-extra]');
+      if(!b)return;
       const match=window.cpActiveScoringMatch;
       if(!match){showToast('Open a live match before scoring extras');return;}
       const inn=ensureInnings(match,Number(match.innings)||1);
-      const striker=document.getElementById('scoreStriker'), nonStriker=document.getElementById('scoreNonStriker'), bowler=document.getElementById('scoreBowler');
-      if(striker)inn.strikerCode=striker.value;if(nonStriker)inn.nonStrikerCode=nonStriker.value;if(bowler)inn.bowlerCode=bowler.value;
+      const striker=document.getElementById('scoreStriker'),nonStriker=document.getElementById('scoreNonStriker'),bowler=document.getElementById('scoreBowler');
+      if(striker)inn.strikerCode=striker.value;
+      if(nonStriker)inn.nonStrikerCode=nonStriker.value;
+      if(bowler)inn.bowlerCode=bowler.value;
       const type=b.dataset.cpExtra;
       if(!inn.strikerCode||!inn.bowlerCode||((type==='bye'||type==='legbye')&&!inn.nonStrikerCode)){showToast('Choose the batters and bowler before scoring extras');return;}
       const runs=Number(b.dataset.runs)||0;
       const action=type==='wide'?{type:'wide',totalRuns:runs+1,extras:runs+1,bowlerRuns:runs+1,legal:false,label:'WD+'+runs}:type==='noball'?{type:'noball',batterRuns:runs,totalRuns:runs+1,extras:1,bowlerRuns:runs+1,legal:false,label:'NB+'+runs}:{type,extraRuns:runs,totalRuns:runs,extras:runs,bowlerRuns:0,legal:true,label:runs+' '+type.toUpperCase()};
-      const p=document.getElementById('cpExtrasPopup');if(p)p.style.display='none';
-      recordPlayerDelivery(match,action);return;
+      overlay.style.display='none';
+      recordPlayerDelivery(match,action);
+    });
+    return overlay;
+  }
+  function ensureScoringActions(match){
+    const root=document.getElementById('scoreModalContent');
+    if(!root||!document.getElementById('scoreModal')?.classList.contains('open'))return;
+    let actions=root.querySelector('#cpScoringQuickActions');
+    if(!actions){
+      actions=document.createElement('div');
+      actions.id='cpScoringQuickActions';
+      actions.style.cssText='display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0;position:relative;z-index:2';
+      actions.innerHTML='<button type="button" class="secondary" data-cp-open-extras style="min-height:48px">＋ Extras</button><button type="button" class="secondary" data-cp-open-next-bowler style="min-height:48px">Next Over Bowler</button>';
+      const card=root.querySelector('.result-card');
+      if(card)card.insertAdjacentElement('afterend',actions);else root.prepend(actions);
+      actions.querySelector('[data-cp-open-extras]').addEventListener('click',function(){ensureExtrasPopup().style.display='flex';});
+      actions.querySelector('[data-cp-open-next-bowler]').addEventListener('click',function(){
+        const active=window.cpActiveScoringMatch||match;
+        if(!active){showToast('Open a live match first');return;}
+        const inn=ensureInnings(active,Number(active.innings)||1);
+        if(typeof window.cpShowNextOverBowlerDialog==='function')window.cpShowNextOverBowlerDialog(active,inn,inn.bowlerCode||'');
+        else showToast('Bowler picker is not available right now');
+      });
     }
-    const next=e.target.closest&&e.target.closest('[data-cp-open-next-bowler]');
-    if(next){
-      const match=window.cpActiveScoringMatch;if(!match){showToast('Open a live match first');return;}
-      const inn=ensureInnings(match,Number(match.innings)||1);
-      if(typeof window.cpShowNextOverBowlerDialog==='function')window.cpShowNextOverBowlerDialog(match,inn,inn.bowlerCode||'');
-      else showToast('Bowler picker is not available right now');
-    }
-  });
+    ensureExtrasPopup();
+  }
+  const renderBeforeReliableTools=renderScoring;
+  renderScoring=function(match){
+    const result=renderBeforeReliableTools(match);
+    ensureScoringActions(match);
+    return result;
+  };
+  const root=document.getElementById('scoreModalContent');
+  if(root&&typeof MutationObserver!=='undefined'){
+    let repairing=false;
+    const observer=new MutationObserver(function(){
+      if(repairing||!document.getElementById('scoreModal')?.classList.contains('open'))return;
+      repairing=true;
+      try{ensureScoringActions(window.cpActiveScoringMatch);}finally{repairing=false;}
+    });
+    observer.observe(root,{childList:true,subtree:true});
+  }
 })();
 </script>
 
