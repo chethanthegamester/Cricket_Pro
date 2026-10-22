@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Cricket Pro",
+  "short_name": "Cricket Pro",
+  "description": "Cricket scoring, teams, players, tournaments and scorecards.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0f14",
+  "theme_color": "#b8f34a",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
