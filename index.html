@@ -105,6 +105,28 @@
 @media(max-width:850px){.auth-shell{grid-template-columns:1fr}.auth-visual{min-height:300px;padding:24px}.auth-headline h2{font-size:38px}.auth-visual-foot{margin-top:30px}.auth-form-wrap{padding:28px 22px}}
 @media(max-width:480px){.auth-shell{border-radius:15px}.auth-visual{min-height:280px}.auth-headline h2{font-size:34px}.auth-form h2{font-size:27px}.auth-form .form-actions{grid-template-columns:1fr}.auth-form-wrap{padding:22px 16px}}
 
+
+/* Mobile usability: make scrollable areas and navigation easier to see and use. */
+html{scrollbar-gutter:stable}
+*{scrollbar-width:auto;scrollbar-color:#6f853e #18212b}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:#18212b;border-radius:10px}
+::-webkit-scrollbar-thumb{background:#6f853e;border:2px solid #18212b;border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:var(--green)}
+.table-wrap,.cp-score-dialog,#scoreModal .modal,#publicScorecardModal .modal,#playerQuickProfileModal .modal,.cp-choice-player-list{scrollbar-width:auto;scrollbar-color:var(--green2) #18212b}
+.table-wrap::-webkit-scrollbar,.cp-score-dialog::-webkit-scrollbar,#scoreModal .modal::-webkit-scrollbar,#publicScorecardModal .modal::-webkit-scrollbar,#playerQuickProfileModal .modal::-webkit-scrollbar,.cp-choice-player-list::-webkit-scrollbar{width:12px;height:12px}
+.table-wrap::-webkit-scrollbar-thumb,.cp-score-dialog::-webkit-scrollbar-thumb,#scoreModal .modal::-webkit-scrollbar-thumb,#publicScorecardModal .modal::-webkit-scrollbar-thumb,#playerQuickProfileModal .modal::-webkit-scrollbar-thumb,.cp-choice-player-list::-webkit-scrollbar-thumb{background:var(--green2);border:2px solid #18212b;border-radius:10px}
+@media(max-width:600px){
+  .nav{gap:7px;padding:0 0 8px;scrollbar-width:auto;scrollbar-color:var(--green2) #18212b}
+  .nav::-webkit-scrollbar{height:9px;width:9px}
+  .nav::-webkit-scrollbar-thumb{background:var(--green2);border:2px solid #18212b;border-radius:9px}
+  .nav button{min-height:44px;padding:11px 13px;touch-action:pan-x;white-space:nowrap}
+  .table-wrap{max-width:100%;overscroll-behavior-x:contain}
+  .modal-backdrop{padding:8px}
+  .modal{max-height:calc(100dvh - 16px);overflow:auto;overscroll-behavior:contain}
+  .cp-choice-player-list{max-height:55dvh;overflow-y:auto}
+}
+
 </style><style id="cricket-pro-responsive-upgrades">
 /* Expanded Cricket Pro screens */
 #discoverResults .profile-card{min-width:0}#discoverResults .result-card{margin-top:0}#discoverResults .primary,#externalRecordsList button{white-space:nowrap}.record-meta{font-size:11px;color:var(--muted);margin-top:6px}.record-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.record-status{display:inline-block;border-radius:7px;padding:4px 8px;font-size:10px;font-weight:900;letter-spacing:.3px;background:#263241;color:#dbe7f4}.record-status.approved{background:#25321a;color:var(--green)}.record-status.pending{background:#332b19;color:#f3ce75}.record-status.rejected{background:#3b2227;color:#ff929b}.community-tag{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--green);font-weight:800}
