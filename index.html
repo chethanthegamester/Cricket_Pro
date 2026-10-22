@@ -2513,5 +2513,59 @@ window.cpOpenMatchStartPickers=function(match){
 })();
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(err=>console.warn("App shell registration failed",err)));}</script>
+<style id="cp-showcase-fullscreen-style">
+#cpShowcaseViewer[hidden]{display:none!important}
+#cpShowcaseViewer{position:fixed;inset:0;z-index:100000;background:rgba(2,7,4,.96);backdrop-filter:blur(14px);display:flex;flex-direction:column;color:#f2f8f0;padding:clamp(12px,3vw,28px);overflow:auto}
+.cp-viewer-top{display:flex;align-items:center;justify-content:space-between;gap:12px;width:min(1100px,100%);margin:0 auto 14px}
+.cp-viewer-brand{font-weight:950;letter-spacing:.04em}.cp-viewer-brand em{font-style:normal;color:#b8f34a}
+.cp-viewer-counter{font-size:12px;color:#a8b7aa}
+.cp-viewer-close{border:1px solid #405744;background:#142218;color:#fff;border-radius:999px;padding:10px 15px;cursor:pointer;font-weight:800}
+.cp-viewer-main{width:min(1100px,100%);margin:auto;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;gap:clamp(8px,2vw,22px);align-items:center}
+.cp-viewer-arrow{width:46px;height:56px;border-radius:14px;border:1px solid #42613d;background:#102416;color:#b8f34a;font-size:28px;cursor:pointer}
+.cp-viewer-arrow:hover,.cp-viewer-close:hover{border-color:#b8f34a}
+.cp-viewer-content{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,.8fr);gap:clamp(18px,4vw,44px);align-items:center}
+.cp-viewer-copy .cp-showcase-kicker{font-size:12px}.cp-viewer-copy h2{font-size:clamp(26px,5vw,48px);line-height:1.08;letter-spacing:-.04em;margin:10px 0}.cp-viewer-copy p{font-size:clamp(14px,2vw,17px);color:#aab9ac;line-height:1.65}.cp-viewer-preview{max-width:340px;width:100%;justify-self:center}.cp-viewer-preview .cp-showcase-phone{height:min(55vh,480px);min-height:320px;padding:14px 12px}.cp-viewer-preview .cp-showcase-status{font-size:11px;padding:10px 4px 15px}.cp-viewer-preview .cp-showcase-appbar{font-size:14px}.cp-viewer-preview .cp-showcase-box{font-size:12px;padding:12px;margin:9px 0}.cp-viewer-preview .cp-showcase-box b{font-size:14px}.cp-viewer-preview .cp-showcase-row{font-size:11px;padding:10px 4px}.cp-viewer-preview .cp-showcase-row strong{font-size:11px}.cp-viewer-preview .cp-showcase-score{font-size:27px}.cp-viewer-preview .cp-showcase-score span{font-size:12px}.cp-viewer-preview .cp-showcase-pill{font-size:10px;padding:7px 9px}.cp-viewer-preview .cp-showcase-bottom{font-size:10px}.cp-viewer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.cp-viewer-actions button{border-radius:10px;padding:12px 16px;font-weight:850;cursor:pointer}.cp-viewer-open{border:0;background:#b8f34a;color:#081208}.cp-viewer-dots{display:flex;justify-content:center;gap:9px;padding:18px 0 4px}.cp-viewer-dot{height:8px;width:8px;border-radius:50%;border:0;background:#526454;padding:0;cursor:pointer}.cp-viewer-dot[aria-current=true]{background:#b8f34a;box-shadow:0 0 0 4px #b8f34a22}
+@media(max-width:650px){#cpShowcaseViewer{padding:12px}.cp-viewer-main{grid-template-columns:34px minmax(0,1fr) 34px;gap:5px}.cp-viewer-arrow{width:34px;height:46px;border-radius:10px}.cp-viewer-content{grid-template-columns:1fr;gap:12px}.cp-viewer-copy{text-align:center}.cp-viewer-copy h2{font-size:27px;margin:7px 0}.cp-viewer-copy p{font-size:13px;margin:6px 0}.cp-viewer-actions{justify-content:center;margin-top:12px}.cp-viewer-preview{max-width:240px}.cp-viewer-preview .cp-showcase-phone{height:34vh;min-height:210px;max-height:300px;padding:7px}.cp-viewer-preview .cp-showcase-status{padding:6px 3px 8px}.cp-viewer-preview .cp-showcase-box{padding:7px;margin:5px 0}.cp-viewer-preview .cp-showcase-row{padding:5px 3px}.cp-viewer-preview .cp-showcase-bottom{margin-top:5px;padding-top:4px}.cp-viewer-dots{padding:10px 0}}
+@media(max-height:700px) and (min-width:651px){.cp-viewer-content{grid-template-columns:minmax(0,1fr) minmax(180px,.6fr)}.cp-viewer-preview .cp-showcase-phone{height:52vh;min-height:260px}.cp-viewer-copy h2{font-size:30px}}
+</style>
+<div id="cpShowcaseViewer" hidden role="dialog" aria-modal="true" aria-label="Cricket Pro screen showcase">
+ <div class="cp-viewer-top"><div class="cp-viewer-brand">CRICKET <em>PRO</em></div><div class="cp-viewer-counter" id="cpViewerCounter">Screen 1 of 5</div><button class="cp-viewer-close" id="cpViewerClose" aria-label="Close full screen preview">✕ Close</button></div>
+ <div class="cp-viewer-main"><button class="cp-viewer-arrow" id="cpViewerPrev" aria-label="Previous screen">‹</button><div class="cp-viewer-content"><div class="cp-viewer-copy"><div class="cp-showcase-kicker">Explore the app</div><h2 id="cpViewerTitle">Home dashboard</h2><p id="cpViewerDescription">Your cricket tools, all together.</p><div class="cp-viewer-actions"><button class="cp-viewer-open" id="cpViewerOpenSection">Open this section ↗</button></div></div><div class="cp-viewer-preview" id="cpViewerPreview"></div></div><button class="cp-viewer-arrow" id="cpViewerNext" aria-label="Next screen">›</button></div>
+ <div class="cp-viewer-dots" id="cpViewerDots" aria-label="Choose preview screen"></div>
+</div>
+<script id="cp-showcase-fullscreen-script">
+(function(){
+ const viewer=document.getElementById('cpShowcaseViewer');if(!viewer)return;
+ const cards=Array.from(document.querySelectorAll('.cp-showcase-card'));if(!cards.length)return;
+ const title=document.getElementById('cpViewerTitle'),desc=document.getElementById('cpViewerDescription'),preview=document.getElementById('cpViewerPreview'),counter=document.getElementById('cpViewerCounter'),dots=document.getElementById('cpViewerDots');
+ let active=0,previousFocus=null;
+ const descriptions=[
+  'Your home base for cricket matches, teams, scorecards and player activity.',
+  'A visual look at ball-by-ball scoring controls and the match scoreboard.',
+  'Organise squads, player identities and team details in one place.',
+  'Follow batting figures, totals, overs and match score summaries.',
+  'Keep league standings, tournament fixtures and results together.'
+ ];
+ function render(){
+  const card=cards[active],phone=card.querySelector('.cp-showcase-phone');
+  title.textContent=card.querySelector('.cp-showcase-label')?.textContent||'Cricket Pro';
+  desc.textContent=descriptions[active]||card.querySelector('.cp-showcase-sub')?.textContent||'Explore Cricket Pro.';
+  preview.replaceChildren(phone.cloneNode(true));counter.textContent='Screen '+(active+1)+' of '+cards.length;
+  Array.from(dots.children).forEach((d,i)=>d.setAttribute('aria-current',String(i===active)));
+  document.getElementById('cpViewerPrev').disabled=cards.length<2;
+  document.getElementById('cpViewerNext').disabled=cards.length<2;
+ }
+ function go(n){active=(n+cards.length)%cards.length;render();}
+ function open(i){previousFocus=document.activeElement;go(i);viewer.hidden=false;document.body.style.overflow='hidden';document.getElementById('cpViewerClose').focus();}
+ function close(){viewer.hidden=true;document.body.style.overflow='';if(previousFocus&&previousFocus.focus)previousFocus.focus();}
+ cards.forEach((card,i)=>{const dot=document.createElement('button');dot.className='cp-viewer-dot';dot.type='button';dot.setAttribute('aria-label','Show '+(i+1)+': '+(card.querySelector('.cp-showcase-label')?.textContent||'screen'));dot.addEventListener('click',()=>go(i));dots.appendChild(dot);card.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();open(i);},true);});
+ document.getElementById('cpViewerPrev').addEventListener('click',()=>go(active-1));
+ document.getElementById('cpViewerNext').addEventListener('click',()=>go(active+1));
+ document.getElementById('cpViewerClose').addEventListener('click',close);
+ document.getElementById('cpViewerOpenSection').addEventListener('click',()=>{const target=cards[active].getAttribute('data-goto');close();const nav=document.querySelector('[data-page="'+target+'"]');if(nav)nav.click();});
+ viewer.addEventListener('click',e=>{if(e.target===viewer)close();});
+ document.addEventListener('keydown',e=>{if(viewer.hidden)return;if(e.key==='Escape')close();if(e.key==='ArrowRight')go(active+1);if(e.key==='ArrowLeft')go(active-1);});
+})();
+</script>
 </body>
 </html>
