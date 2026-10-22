@@ -536,35 +536,34 @@ function esc(value = '') {
   });
 }
 function playerDisplayName(p = {}) {
-  // Older records sometimes store another player's code in the name field.
-  // Treat code-shaped values as codes, never as display names.
+  // Names may live in the database row's name column while data.name contains a code.
   const code = String(p.code || p.playerCode || p.player_code || p.playerId || p.player_id || '').trim().toUpperCase();
   const teamId = String(p.teamId || p.team_id || p.teamID || '').trim();
-  const codes = new Set([
-    p.code, p.playerCode, p.player_code, p.playerId, p.player_id, p.id
-  ].map(value => String(value ?? '').trim().toUpperCase()).filter(Boolean));
+  const codes = new Set([p.code,p.playerCode,p.player_code,p.playerId,p.player_id,p.id]
+    .map(value => String(value ?? '').trim().toUpperCase()).filter(Boolean));
+  const validValue = (value, candidateCodes = codes) => {
+    const name = String(value ?? '').trim();
+    const upper = name.toUpperCase();
+    if (!name || upper === 'NAME NOT SET' || candidateCodes.has(upper) ||
+        /^[A-Z]{4,}[0-9]{2,}$/.test(upper) || /^PLAYER[-_]/.test(upper)) return '';
+    return name;
+  };
   const validName = candidate => {
     if (!candidate) return '';
-    for (const value of [candidate.name, candidate.fullName, candidate.full_name,
-      candidate.playerName, candidate.player_name, candidate.displayName, candidate.display_name]) {
-      const name = String(value ?? '').trim();
-      const upper = name.toUpperCase();
-      if (name && !codes.has(upper) && !/^[A-Z]{4,}[0-9]{2,}$/.test(upper) && !/^PLAYER[-_]/.test(upper)) return name;
+    for (const value of [candidate.rowName,candidate.fullName,candidate.full_name,
+      candidate.playerName,candidate.player_name,candidate.displayName,candidate.display_name,candidate.name]) {
+      const name = validValue(value, new Set([candidate.code,candidate.playerCode,candidate.player_code,candidate.playerId,candidate.player_id,candidate.id]
+        .map(v=>String(v??'').trim().toUpperCase()).filter(Boolean)));
+      if (name) return name;
     }
     return '';
   };
   const ownName = validName(p);
   if (ownName) return ownName;
   if (code && typeof cloudPlayers !== 'undefined' && Array.isArray(cloudPlayers)) {
-    // Prefer the matching team, then try the same code across teams for older
-    // records whose team ID changed during a previous roster edit.
     const candidates = cloudPlayers.filter(candidate =>
       String(candidate?.code || candidate?.playerCode || candidate?.player_code || candidate?.playerId || candidate?.player_id || '').trim().toUpperCase() === code
-    ).sort((a, b) => {
-      const aTeam = String(a?.teamId || a?.team_id || '').trim() === teamId ? 1 : 0;
-      const bTeam = String(b?.teamId || b?.team_id || '').trim() === teamId ? 1 : 0;
-      return bTeam - aTeam;
-    });
+    ).sort((a,b) => (String(a?.teamId||a?.team_id||'').trim()===teamId?1:0)-(String(b?.teamId||b?.team_id||'').trim()===teamId?1:0)).reverse();
     for (const candidate of candidates) {
       const cloudName = validName(candidate);
       if (cloudName) return cloudName;
@@ -732,7 +731,7 @@ async function loadCloudMatches(){
       .eq('is_public',true).in('kind',['match','team','player']).limit(500);
     if(error)throw error;
     const rows=data||[];
-    const unpack=row=>{const data=(row.data&&typeof row.data==='object')?row.data:{};const item={...data,id:row.id,owner_id:row.owner_id,created_at:row.created_at};if(row.kind==='player'){const named=normalizePlayerName({...item,code:data.code||data.playerCode||data.player_code||data.playerId||data.player_id||'',teamId:data.teamId||data.team_id||data.teamID||'',name:data.name||data.displayName||data.display_name||data.playerName||data.player_name||data.full_name||data.fullName||row.name});return {...named,name:playerDisplayName(named)};}return {...item,id:data.id||row.id,name:data.name||row.name};};
+    const unpack=row=>{const data=(row.data&&typeof row.data==='object')?row.data:{};const item={...data,id:row.id,owner_id:row.owner_id,created_at:row.created_at};if(row.kind==='player'){const named=normalizePlayerName({...item,rowName:row.name,code:data.code||data.playerCode||data.player_code||data.playerId||data.player_id||'',teamId:data.teamId||data.team_id||data.teamID||'',name:data.name||data.displayName||data.display_name||data.playerName||data.player_name||data.full_name||data.fullName||row.name});return {...named,name:playerDisplayName(named)};}return {...item,id:data.id||row.id,name:data.name||row.name};};
     cloudMatches=rows.filter(r=>r.kind==='match').map(unpack);
     cloudTeams=rows.filter(r=>r.kind==='team').map(unpack);
     cloudPlayers=rows.filter(r=>r.kind==='player').map(unpack);
