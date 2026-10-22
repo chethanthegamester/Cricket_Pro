@@ -1,0 +1,16 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.gamester.cricketpro'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.gamester.cricketpro'
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+}
